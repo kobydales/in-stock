@@ -1,10 +1,11 @@
 import './App.css'
+import MainLayout from './layouts/MainLayout'
 
 function App() {
   return (
-    <div className="App">
-      <h1>In-Stock Inventory System</h1>
-    </div>
+    <MainLayout>
+      <p>Welcome to your inventory dashboard.</p>
+    </MainLayout>
   )
 }
 
