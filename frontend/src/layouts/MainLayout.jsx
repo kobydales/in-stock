@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import './MainLayout.css'
 
 function MainLayout({ children }) {
@@ -6,11 +7,11 @@ function MainLayout({ children }) {
       <aside className="sidebar">
         <h2 className="app-name">In-Stock</h2>
         <nav className="nav-links">
-          <a href="#">Dashboard</a>
-          <a href="#">Inventory</a>
-          <a href="#">Suppliers</a>
-          <a href="#">Reports</a>
-          <a href="#">Settings</a>
+          <Link to="/">Dashboard</Link>
+          <Link to="/products">Products</Link>
+          <Link to="/inventory">Inventory</Link>
+          <Link to="/suppliers">Suppliers</Link>
+          <Link to="/reports">Reports</Link>
         </nav>
       </aside>
 
