@@ -15,3 +15,15 @@ export async function fetchProducts() {
   }
   return response.json()
 }
+export async function createProduct(product) {
+  const response = await fetch(`${API_URL}/api/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(product),
+  })
+  if (!response.ok) {
+    throw new Error('Failed to create product')
+  }
+  return response.json()
+}
+
