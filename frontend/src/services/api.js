@@ -7,3 +7,11 @@ export async function fetchTestData() {
   }
   return response.json()
 }
+
+export async function fetchProducts() {
+  const response = await fetch(`${API_URL}/api/products`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch products')
+  }
+  return response.json()
+}
