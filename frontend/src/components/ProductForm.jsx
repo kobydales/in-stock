@@ -1,15 +1,16 @@
 import { useState } from 'react'
 
-function ProductForm({ onSubmit, onCancel }) {
+
+function ProductForm({ onSubmit, onCancel, initialData }) {
   const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    selling_price: '',
-    cost_price: '',
-    quantity: '',
-    minimum_stock: '',
-    description: '',
-    status: 'active',
+    name: initialData?.name || '',
+    sku: initialData?.sku || '',
+    selling_price: initialData?.selling_price || '',
+    cost_price: initialData?.cost_price || '',
+    quantity: initialData?.quantity || '',
+    minimum_stock: initialData?.minimum_stock || '',
+    description: initialData?.description || '',
+    status: initialData?.status || 'active',
   })
   const [errors, setErrors] = useState({})
 
