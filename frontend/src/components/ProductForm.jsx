@@ -20,30 +20,33 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
   }
 
   function validate() {
-    const newErrors = {}
-    if (!formData.name.trim()) newErrors.name = 'Name is required'
-    if (!formData.sku.trim()) newErrors.sku = 'SKU is required'
-    if (!formData.selling_price || Number(formData.selling_price) <= 0) {
-      newErrors.selling_price = 'Selling price must be greater than 0'
-    }
-    if (!formData.cost_price || Number(formData.cost_price) < 0) {
-      newErrors.cost_price = 'Cost price must be 0 or greater'
-    }
-    if (formData.quantity === '' || Number(formData.quantity) < 0) {
-      newErrors.quantity = 'Quantity must be 0 or greater'
-    }
-    return newErrors
+  const newErrors = {}
+  if (!formData.name.trim()) newErrors.name = 'Name is required'
+  if (!formData.selling_price || Number(formData.selling_price) <= 0) {
+    newErrors.selling_price = 'Selling price must be greater than 0'
   }
+  if (!formData.cost_price || Number(formData.cost_price) < 0) {
+    newErrors.cost_price = 'Cost price must be 0 or greater'
+  }
+  if (formData.quantity === '' || Number(formData.quantity) < 0) {
+    newErrors.quantity = 'Quantity must be 0 or greater'
+  }
+  return newErrors
+}
 
-  function handleSubmit(e) {
-    e.preventDefault()
-    const validationErrors = validate()
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
-    onSubmit(formData)
+ function handleSubmit(e) {
+  e.preventDefault()
+  const validationErrors = validate()
+  if (Object.keys(validationErrors).length > 0) {
+    setErrors(validationErrors)
+    return
   }
+  const cleanedData = {
+    ...formData,
+    sku: formData.sku.trim() === '' ? null : formData.sku,
+  }
+  onSubmit(cleanedData)
+}
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px' }}>
@@ -54,9 +57,8 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
       </div>
 
       <div>
-        <label>SKU</label>
+        <label>SKU (optional)</label>
         <input name="sku" value={formData.sku} onChange={handleChange} />
-        {errors.sku && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.sku}</p>}
       </div>
 
       <div>
