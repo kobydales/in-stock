@@ -8,6 +8,14 @@ function Products() {
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const filteredProducts = products.filter((product) => {
+  const term = searchTerm.toLowerCase()
+  return (
+    product.name.toLowerCase().includes(term) ||
+    product.sku.toLowerCase().includes(term)
+  )
+})
 
   function loadProducts() {
     setLoading(true)
@@ -75,6 +83,16 @@ async function handleDeleteProduct(product) {
         )}
       </div>
 
+      {!showForm && !editingProduct && (
+        <input
+        type="text"
+        placeholder="Search by name or SKU..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+       style={{ padding: '8px', marginTop: '12px', width: '100%', maxWidth: '300px' }}
+        />
+      )}
+
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
 
       {showForm && (
@@ -92,11 +110,15 @@ async function handleDeleteProduct(product) {
         />
       )}
 
-      {!showForm && !editingProduct && products.length === 0 && (
-        <p>No products found. Add your first product to get started.</p>
-      )}
+     {!showForm && !editingProduct && filteredProducts.length === 0 && (
+  <p>
+    {searchTerm
+      ? `No products match "${searchTerm}"`
+      : 'No products found. Add your first product to get started.'}
+  </p>
+)}
 
-      {!showForm && !editingProduct && products.length > 0 && (
+{!showForm && !editingProduct && filteredProducts.length > 0 && (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
@@ -109,7 +131,7 @@ async function handleDeleteProduct(product) {
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px' }}>{product.name}</td>
                 <td style={{ padding: '8px' }}>{product.sku}</td>
