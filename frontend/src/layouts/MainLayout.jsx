@@ -8,6 +8,7 @@ function MainLayout({ children }) {
         <h2 className="app-name">In-Stock</h2>
         <nav className="nav-links">
           <Link to="/">Dashboard</Link>
+          <Link to="/categories">Categories</Link>
           <Link to="/products">Products</Link>
           <Link to="/inventory">Inventory</Link>
           <Link to="/suppliers">Suppliers</Link>

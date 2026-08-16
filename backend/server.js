@@ -4,11 +4,13 @@ const pool = require('./db')
 const app = express()
 const PORT = 5050
 const productRoutes = require('./routes/products')
+const categoryRoutes = require('./routes/categories')
 
 app.use(cors())
 app.use(express.json())
 
 app.use('/api/products', productRoutes)
+app.use('/api/categories', categoryRoutes)
 
 app.get('/', (req, res) => {
   res.send('In-Stock API is running')
