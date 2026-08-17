@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
-import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../services/api'
+import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories } from '../services/api'
 
 function Products() {
   const [products, setProducts] = useState([])
@@ -9,13 +9,17 @@ function Products() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [categories, setCategories] = useState([])
+  const [categoryFilter, setCategoryFilter] = useState('')
+
   const filteredProducts = products.filter((product) => {
-  const term = searchTerm.toLowerCase()
-  return (
-    product.name.toLowerCase().includes(term) ||
-    product.sku.toLowerCase().includes(term)
-  )
-})
+    const term = searchTerm.toLowerCase()
+    const matchesSearch =
+      product.name.toLowerCase().includes(term) ||
+      (product.sku && product.sku.toLowerCase().includes(term))
+    const matchesCategory = categoryFilter === '' || product.category_id === Number(categoryFilter)
+    return matchesSearch && matchesCategory
+  })
 
   function loadProducts() {
     setLoading(true)
@@ -32,6 +36,7 @@ function Products() {
 
   useEffect(() => {
     loadProducts()
+    fetchCategories().then(setCategories).catch(() => setCategories([]))
   }, [])
 
   async function handleAddProduct(formData) {
@@ -53,17 +58,18 @@ function Products() {
       setError(err.message)
     }
   }
-async function handleDeleteProduct(product) {
-  const confirmed = window.confirm(`Delete "${product.name}"? This cannot be undone.`)
-  if (!confirmed) return
 
-  try {
-    await deleteProduct(product.id)
-    loadProducts()
-  } catch (err) {
-    setError(err.message)
+  async function handleDeleteProduct(product) {
+    const confirmed = window.confirm(`Delete "${product.name}"? This cannot be undone.`)
+    if (!confirmed) return
+
+    try {
+      await deleteProduct(product.id)
+      loadProducts()
+    } catch (err) {
+      setError(err.message)
+    }
   }
-}
 
   function startEdit(product) {
     setEditingProduct(product)
@@ -84,13 +90,25 @@ async function handleDeleteProduct(product) {
       </div>
 
       {!showForm && !editingProduct && (
-        <input
-        type="text"
-        placeholder="Search by name or SKU..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-       style={{ padding: '8px', marginTop: '12px', width: '100%', maxWidth: '300px' }}
-        />
+        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+          <input
+            type="text"
+            placeholder="Search by name or SKU..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '8px', width: '100%', maxWidth: '300px' }}
+          />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{ padding: '8px' }}
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
       )}
 
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
@@ -110,19 +128,20 @@ async function handleDeleteProduct(product) {
         />
       )}
 
-     {!showForm && !editingProduct && filteredProducts.length === 0 && (
-  <p>
-    {searchTerm
-      ? `No products match "${searchTerm}"`
-      : 'No products found. Add your first product to get started.'}
-  </p>
-)}
+      {!showForm && !editingProduct && filteredProducts.length === 0 && (
+        <p>
+          {searchTerm
+            ? `No products match "${searchTerm}"`
+            : 'No products found. Add your first product to get started.'}
+        </p>
+      )}
 
-{!showForm && !editingProduct && filteredProducts.length > 0 && (
+      {!showForm && !editingProduct && filteredProducts.length > 0 && (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
               <th style={{ padding: '8px' }}>Name</th>
+              <th style={{ padding: '8px' }}>Category</th>
               <th style={{ padding: '8px' }}>SKU</th>
               <th style={{ padding: '8px' }}>Price</th>
               <th style={{ padding: '8px' }}>Quantity</th>
@@ -134,6 +153,7 @@ async function handleDeleteProduct(product) {
             {filteredProducts.map((product) => (
               <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px' }}>{product.name}</td>
+                <td style={{ padding: '8px' }}>{product.category_name || '—'}</td>
                 <td style={{ padding: '8px' }}>{product.sku}</td>
                 <td style={{ padding: '8px' }}>${product.selling_price}</td>
                 <td style={{ padding: '8px' }}>{product.quantity}</td>

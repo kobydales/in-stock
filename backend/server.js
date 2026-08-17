@@ -5,10 +5,11 @@ const app = express()
 const PORT = 5050
 const productRoutes = require('./routes/products')
 const categoryRoutes = require('./routes/categories')
+const supplierRoutes = require('./routes/suppliers')
 
 app.use(cors())
 app.use(express.json())
-
+app.use('/api/suppliers', supplierRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 

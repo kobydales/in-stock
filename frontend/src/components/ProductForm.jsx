@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { fetchCategories } from '../services/api'
 
 
 function ProductForm({ onSubmit, onCancel, initialData }) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     sku: initialData?.sku || '',
+    category_id: initialData?.category_id || '',
     selling_price: initialData?.selling_price || '',
     cost_price: initialData?.cost_price || '',
     quantity: initialData?.quantity || '',
@@ -18,6 +20,13 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+  fetchCategories()
+    .then(setCategories)
+    .catch(() => setCategories([]))
+  }, [])
 
   function validate() {
   const newErrors = {}
@@ -34,7 +43,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
   return newErrors
 }
 
- function handleSubmit(e) {
+function handleSubmit(e) {
   e.preventDefault()
   const validationErrors = validate()
   if (Object.keys(validationErrors).length > 0) {
@@ -44,6 +53,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
   const cleanedData = {
     ...formData,
     sku: formData.sku.trim() === '' ? null : formData.sku,
+    category_id: formData.category_id === '' ? null : Number(formData.category_id),
   }
   onSubmit(cleanedData)
 }
@@ -59,6 +69,16 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
       <div>
         <label>SKU (optional)</label>
         <input name="sku" value={formData.sku} onChange={handleChange} />
+      </div>
+
+      <div>
+      <label>Category</label>
+      <select name="category_id" value={formData.category_id} onChange={handleChange}>
+          <option value="">-- No category --</option>
+            {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>{cat.name}</option>
+        ))}
+      </select>
       </div>
 
       <div>
