@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
-import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories } from '../services/api'
+import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchSuppliers } from '../services/api'
 
 function Products() {
   const [products, setProducts] = useState([])
@@ -11,6 +11,8 @@ function Products() {
   const [searchTerm, setSearchTerm] = useState('')
   const [categories, setCategories] = useState([])
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [suppliers, setSuppliers] = useState([])
+  const [supplierFilter, setSupplierFilter] = useState('')
 
   const filteredProducts = products.filter((product) => {
     const term = searchTerm.toLowerCase()
@@ -18,7 +20,8 @@ function Products() {
       product.name.toLowerCase().includes(term) ||
       (product.sku && product.sku.toLowerCase().includes(term))
     const matchesCategory = categoryFilter === '' || product.category_id === Number(categoryFilter)
-    return matchesSearch && matchesCategory
+    const matchesSupplier = supplierFilter === '' || product.supplier_id === Number(supplierFilter)
+    return matchesSearch && matchesCategory && matchesSupplier
   })
 
   function loadProducts() {
@@ -37,6 +40,7 @@ function Products() {
   useEffect(() => {
     loadProducts()
     fetchCategories().then(setCategories).catch(() => setCategories([]))
+    fetchSuppliers().then(setSuppliers).catch(() => setSuppliers([]))
   }, [])
 
   async function handleAddProduct(formData) {
@@ -108,6 +112,16 @@ function Products() {
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
+          <select
+            value={supplierFilter}
+            onChange={(e) => setSupplierFilter(e.target.value)}
+            style={{ padding: '8px' }}
+          >
+            <option value="">All Suppliers</option>
+            {suppliers.map((sup) => (
+              <option key={sup.id} value={sup.id}>{sup.name}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -142,6 +156,7 @@ function Products() {
             <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
               <th style={{ padding: '8px' }}>Name</th>
               <th style={{ padding: '8px' }}>Category</th>
+              <th style={{ padding: '8px' }}>Supplier</th>
               <th style={{ padding: '8px' }}>SKU</th>
               <th style={{ padding: '8px' }}>Price</th>
               <th style={{ padding: '8px' }}>Quantity</th>
@@ -154,6 +169,7 @@ function Products() {
               <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px' }}>{product.name}</td>
                 <td style={{ padding: '8px' }}>{product.category_name || '—'}</td>
+                <td style={{ padding: '8px' }}>{product.supplier_name || '—'}</td>
                 <td style={{ padding: '8px' }}>{product.sku}</td>
                 <td style={{ padding: '8px' }}>${product.selling_price}</td>
                 <td style={{ padding: '8px' }}>{product.quantity}</td>

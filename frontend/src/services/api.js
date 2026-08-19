@@ -111,6 +111,9 @@ export async function deleteSupplier(id) {
   const response = await fetch(`${API_URL}/api/suppliers/${id}`, {
     method: 'DELETE',
   })
-  if (!response.ok) throw new Error('Failed to delete supplier')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to delete supplier')
+  }
   return response.json()
 }

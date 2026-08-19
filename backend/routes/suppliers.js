@@ -46,8 +46,12 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Supplier not found' })
     res.json({ message: 'Supplier deleted', supplier: deleted })
   } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({
+        error: 'Cannot delete this supplier — it is still assigned to one or more products. Reassign or remove those products first.',
+      })
+    }
     res.status(500).json({ error: err.message })
   }
 })
-
 module.exports = router
