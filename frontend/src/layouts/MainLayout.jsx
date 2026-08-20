@@ -13,6 +13,7 @@ function MainLayout({ children }) {
           <Link to="/inventory">Inventory</Link>
           <Link to="/suppliers">Suppliers</Link>
           <Link to="/stock-in">Stock In</Link>
+          <Link to="/stock-out">Stock Out</Link>
           <Link to="/reports">Reports</Link>
         </nav>
       </aside>

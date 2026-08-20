@@ -130,3 +130,16 @@ export async function stockIn(data) {
   }
   return response.json()
 }
+
+export async function stockOut(data) {
+  const response = await fetch(`${API_URL}/api/stock-movements/out`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to record stock out')
+  }
+  return response.json()
+}
