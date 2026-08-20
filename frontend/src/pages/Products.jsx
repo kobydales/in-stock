@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
 import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchSuppliers } from '../services/api'
+import { useSearchParams } from 'react-router-dom'
+
 
 function Products() {
   const [products, setProducts] = useState([])
@@ -10,9 +12,11 @@ function Products() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [categories, setCategories] = useState([])
-  const [categoryFilter, setCategoryFilter] = useState('')
   const [suppliers, setSuppliers] = useState([])
-  const [supplierFilter, setSupplierFilter] = useState('')
+  const [searchParams] = useSearchParams()
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '')
+  const [supplierFilter, setSupplierFilter] = useState(searchParams.get('supplier') || '')
+  
 
   const filteredProducts = products.filter((product) => {
     const term = searchTerm.toLowerCase()

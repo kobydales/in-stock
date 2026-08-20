@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../services/api'
 import CategoryForm from '../components/CategoryForm'
+import { Link } from 'react-router-dom'
+
 
 function Categories() {
   const [categories, setCategories] = useState([])
@@ -106,7 +108,9 @@ function Categories() {
           <tbody>
             {categories.map((category) => (
               <tr key={category.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px' }}>{category.name}</td>
+                <td style={{ padding: '8px' }}>
+                <Link to={`/products?category=${category.id}`}>{category.name}</Link>
+                </td>
                 <td style={{ padding: '8px' }}>{category.description || '—'}</td>
                 <td style={{ padding: '8px' }}>{category.status}</td>
                 <td style={{ padding: '8px' }}>

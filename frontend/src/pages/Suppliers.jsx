@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from '../services/api'
 import SupplierForm from '../components/SupplierForm'
+import { Link } from 'react-router-dom'
 
 function Suppliers() {
   const [suppliers, setSuppliers] = useState([])
@@ -107,7 +108,9 @@ function Suppliers() {
           <tbody>
             {suppliers.map((supplier) => (
               <tr key={supplier.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px' }}>{supplier.name}</td>
+                <td style={{ padding: '8px' }}>
+                <Link to={`/products?supplier=${supplier.id}`}>{supplier.name}</Link>
+                </td>
                 <td style={{ padding: '8px' }}>{supplier.contact_person || '—'}</td>
                 <td style={{ padding: '8px' }}>{supplier.contact_phone || '—'}</td>
                 <td style={{ padding: '8px' }}>{supplier.contact_email || '—'}</td>
