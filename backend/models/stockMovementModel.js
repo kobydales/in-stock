@@ -1,5 +1,44 @@
 const pool = require('../db')
 
+async function stockOut(productId, quantity, notes) {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    const productResult = await client.query('SELECT * FROM products WHERE id = $1', [productId])
+    const product = productResult.rows[0]
+    if (!product) {
+      throw new Error('Product not found')
+    }
+
+    if (product.quantity < quantity) {
+      throw new Error('INSUFFICIENT_STOCK')
+    }
+
+    const newQuantity = product.quantity - quantity
+
+    await client.query(
+      'UPDATE products SET quantity = $1, updated_at = NOW() WHERE id = $2',
+      [newQuantity, productId]
+    )
+
+    const movementResult = await client.query(
+      `INSERT INTO stock_movements (product_id, quantity, movement_type, notes)
+       VALUES ($1, $2, 'out', $3)
+       RETURNING *`,
+      [productId, quantity, notes]
+    )
+
+    await client.query('COMMIT')
+    return { movement: movementResult.rows[0], newQuantity }
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
 async function stockIn(productId, quantity, notes) {
   const client = await pool.connect()
   try {
@@ -45,5 +84,6 @@ async function getMovementsByProduct(productId) {
 
 module.exports = {
   stockIn,
+  stockOut,
   getMovementsByProduct,
 }
