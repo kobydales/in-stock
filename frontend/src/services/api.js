@@ -143,3 +143,21 @@ export async function stockOut(data) {
   }
   return response.json()
 }
+
+export async function fetchDashboardStats() {
+  const response = await fetch(`${API_URL}/api/dashboard/stats`)
+  if (!response.ok) throw new Error('Failed to fetch stats')
+  return response.json()
+}
+
+export async function fetchRecentMovements() {
+  const response = await fetch(`${API_URL}/api/dashboard/recent-movements`)
+  if (!response.ok) throw new Error('Failed to fetch recent movements')
+  return response.json()
+}
+
+export async function fetchMovementChart() {
+  const response = await fetch(`${API_URL}/api/dashboard/movement-chart`)
+  if (!response.ok) throw new Error('Failed to fetch chart data')
+  return response.json()
+}

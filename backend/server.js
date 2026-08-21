@@ -7,12 +7,14 @@ const productRoutes = require('./routes/products')
 const categoryRoutes = require('./routes/categories')
 const supplierRoutes = require('./routes/suppliers')
 const stockMovementRoutes = require('./routes/stockMovements')
+const dashboardRoutes = require('./routes/dashboard')
 
 app.use(cors())
 app.use(express.json())
 app.use('/api/suppliers', supplierRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
 
 app.get('/', (req, res) => {
