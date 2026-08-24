@@ -1,30 +1,29 @@
 const express = require('express')
 const router = express.Router()
 const productModel = require('../models/productModel')
+const { requireAuth } = require('../middleware/auth')
 
-// GET all products
-router.get('/', async (req, res) => {
+router.get('/low-stock', requireAuth, async (req, res) => {
   try {
-    const products = await productModel.getAllProducts()
+    const products = await productModel.getLowStockProducts(req.user.businessId)
     res.json(products)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-router.get('/low-stock', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    const products = await productModel.getLowStockProducts()
+    const products = await productModel.getAllProducts(req.user.businessId)
     res.json(products)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// GET single product
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const product = await productModel.getProductById(req.params.id)
+    const product = await productModel.getProductById(req.params.id, req.user.businessId)
     if (!product) {
       return res.status(404).json({ error: 'Product not found' })
     }
@@ -34,20 +33,18 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// POST create product
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
-    const newProduct = await productModel.createProduct(req.body)
+    const newProduct = await productModel.createProduct(req.body, req.user.businessId)
     res.status(201).json(newProduct)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// PUT update product
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const updatedProduct = await productModel.updateProduct(req.params.id, req.body)
+    const updatedProduct = await productModel.updateProduct(req.params.id, req.body, req.user.businessId)
     if (!updatedProduct) {
       return res.status(404).json({ error: 'Product not found' })
     }
@@ -57,10 +54,9 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// DELETE product
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const deletedProduct = await productModel.deleteProduct(req.params.id)
+    const deletedProduct = await productModel.deleteProduct(req.params.id, req.user.businessId)
     if (!deletedProduct) {
       return res.status(404).json({ error: 'Product not found' })
     }
