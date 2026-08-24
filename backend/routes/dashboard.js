@@ -1,8 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const dashboardModel = require('../models/dashboardModel')
+const { requireAuth } = require('../middleware/auth')
 
-router.get('/stats', async (req, res) => {
+
+router.get('/stats', requireAuth, async (req, res) => {
   try {
     const stats = await dashboardModel.getStats()
     res.json(stats)
