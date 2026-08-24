@@ -131,6 +131,12 @@ export async function stockIn(data) {
   return response.json()
 }
 
+export async function fetchLowStockProducts() {
+  const response = await fetch(`${API_URL}/api/products/low-stock`)
+  if (!response.ok) throw new Error('Failed to fetch low-stock products')
+  return response.json()
+}
+
 export async function stockOut(data) {
   const response = await fetch(`${API_URL}/api/stock-movements/out`, {
     method: 'POST',

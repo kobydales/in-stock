@@ -12,6 +12,15 @@ router.get('/', async (req, res) => {
   }
 })
 
+router.get('/low-stock', async (req, res) => {
+  try {
+    const products = await productModel.getLowStockProducts()
+    res.json(products)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // GET single product
 router.get('/:id', async (req, res) => {
   try {

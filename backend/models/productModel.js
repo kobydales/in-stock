@@ -16,6 +16,18 @@ async function getProductById(id) {
   return result.rows[0]
 }
 
+async function getLowStockProducts() {
+  const result = await pool.query(`
+    SELECT products.*, categories.name AS category_name, suppliers.name AS supplier_name
+    FROM products
+    LEFT JOIN categories ON products.category_id = categories.id
+    LEFT JOIN suppliers ON products.supplier_id = suppliers.id
+    WHERE products.quantity <= products.minimum_stock
+    ORDER BY products.quantity ASC
+  `)
+  return result.rows
+}
+
 async function createProduct(product) {
   const { name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status } = product
 
@@ -54,4 +66,5 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getLowStockProducts,
 }

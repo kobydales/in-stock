@@ -9,6 +9,8 @@ import Reports from './pages/Reports'
 import Categories from './pages/Categories'
 import StockIn from './pages/StockIn'
 import StockOut from './pages/StockOut'
+import LowStock from './pages/LowStock'
+
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/stock-in" element={<StockIn />} />
           <Route path="/stock-out" element={<StockOut />} />
+          <Route path="/low-stock" element={<LowStock />} />
           <Route path="/reports" element={<Reports />} />
         </Routes>
       </MainLayout>

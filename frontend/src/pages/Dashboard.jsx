@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { fetchDashboardStats, fetchRecentMovements, fetchMovementChart } from '../services/api'
+import { Link } from 'react-router-dom'
 
 function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -46,18 +47,24 @@ function Dashboard() {
           <div style={{ fontSize: '0.85em', color: '#666' }}>Total Stock</div>
           <div style={{ fontSize: '1.8em', fontWeight: 'bold' }}>{stats.totalQuantity}</div>
         </div>
-        <div style={{ ...cardStyle, borderColor: stats.lowStock > 0 ? '#e0a800' : '#ddd' }}>
-          <div style={{ fontSize: '0.85em', color: '#666' }}>Low Stock</div>
-          <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.lowStock > 0 ? '#e0a800' : 'inherit' }}>
-            {stats.lowStock}
+
+        <Link to="/low-stock" style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+          <div style={{ ...cardStyle, borderColor: stats.lowStock > 0 ? '#e0a800' : '#ddd', cursor: 'pointer' }}>
+            <div style={{ fontSize: '0.85em', color: '#666' }}>Low Stock</div>
+            <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.lowStock > 0 ? '#e0a800' : 'inherit' }}>
+              {stats.lowStock}
+            </div>
           </div>
-        </div>
-        <div style={{ ...cardStyle, borderColor: stats.outOfStock > 0 ? '#d9534f' : '#ddd' }}>
-          <div style={{ fontSize: '0.85em', color: '#666' }}>Out of Stock</div>
-          <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.outOfStock > 0 ? '#d9534f' : 'inherit' }}>
-            {stats.outOfStock}
+        </Link>
+
+        <Link to="/low-stock" style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+          <div style={{ ...cardStyle, borderColor: stats.outOfStock > 0 ? '#d9534f' : '#ddd', cursor: 'pointer' }}>
+            <div style={{ fontSize: '0.85em', color: '#666' }}>Out of Stock</div>
+            <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.outOfStock > 0 ? '#d9534f' : 'inherit' }}>
+              {stats.outOfStock}
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div style={{ marginTop: '24px' }}>

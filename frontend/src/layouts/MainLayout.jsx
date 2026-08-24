@@ -14,6 +14,7 @@ function MainLayout({ children }) {
           <Link to="/suppliers">Suppliers</Link>
           <Link to="/stock-in">Stock In</Link>
           <Link to="/stock-out">Stock Out</Link>
+          <Link to="/low-stock">Low Stock</Link>
           <Link to="/reports">Reports</Link>
         </nav>
       </aside>
