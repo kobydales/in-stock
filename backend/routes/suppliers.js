@@ -1,19 +1,20 @@
 const express = require('express')
 const router = express.Router()
 const supplierModel = require('../models/supplierModel')
+const { requireAuth } = require('../middleware/auth')
 
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    const suppliers = await supplierModel.getAllSuppliers()
+    const suppliers = await supplierModel.getAllSuppliers(req.user.businessId)
     res.json(suppliers)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const supplier = await supplierModel.getSupplierById(req.params.id)
+    const supplier = await supplierModel.getSupplierById(req.params.id, req.user.businessId)
     if (!supplier) return res.status(404).json({ error: 'Supplier not found' })
     res.json(supplier)
   } catch (err) {
@@ -21,18 +22,18 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
-    const newSupplier = await supplierModel.createSupplier(req.body)
+    const newSupplier = await supplierModel.createSupplier(req.body, req.user.businessId)
     res.status(201).json(newSupplier)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const updated = await supplierModel.updateSupplier(req.params.id, req.body)
+    const updated = await supplierModel.updateSupplier(req.params.id, req.body, req.user.businessId)
     if (!updated) return res.status(404).json({ error: 'Supplier not found' })
     res.json(updated)
   } catch (err) {
@@ -40,10 +41,12 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const deleted = await supplierModel.deleteSupplier(req.params.id)
-    if (!deleted) return res.status(404).json({ error: 'Supplier not found' })
+    const deleted = await supplierModel.deleteSupplier(req.params.id, req.user.businessId)
+    if (!deleted) {
+      return res.status(404).json({ error: 'Supplier not found' })
+    }
     res.json({ message: 'Supplier deleted', supplier: deleted })
   } catch (err) {
     if (err.code === '23503') {
@@ -54,4 +57,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
 module.exports = router
