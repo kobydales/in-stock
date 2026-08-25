@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const stockMovementModel = require('../models/stockMovementModel')
+const { requireAuth } = require('../middleware/auth')
 
-router.post('/in', async (req, res) => {
+router.post('/in', requireAuth, async (req, res) => {
   try {
     const { product_id, quantity, notes } = req.body
 
@@ -13,7 +14,7 @@ router.post('/in', async (req, res) => {
       return res.status(400).json({ error: 'Quantity must be greater than 0' })
     }
 
-    const result = await stockMovementModel.stockIn(Number(product_id), Number(quantity), notes)
+    const result = await stockMovementModel.stockIn(Number(product_id), Number(quantity), notes, req.user.businessId)
     res.status(201).json(result)
   } catch (err) {
     if (err.message === 'Product not found') {
@@ -23,16 +24,7 @@ router.post('/in', async (req, res) => {
   }
 })
 
-router.get('/product/:productId', async (req, res) => {
-  try {
-    const movements = await stockMovementModel.getMovementsByProduct(req.params.productId)
-    res.json(movements)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-router.post('/out', async (req, res) => {
+router.post('/out', requireAuth, async (req, res) => {
   try {
     const { product_id, quantity, notes } = req.body
 
@@ -43,7 +35,7 @@ router.post('/out', async (req, res) => {
       return res.status(400).json({ error: 'Quantity must be greater than 0' })
     }
 
-    const result = await stockMovementModel.stockOut(Number(product_id), Number(quantity), notes)
+    const result = await stockMovementModel.stockOut(Number(product_id), Number(quantity), notes, req.user.businessId)
     res.status(201).json(result)
   } catch (err) {
     if (err.message === 'Product not found') {
@@ -52,6 +44,15 @@ router.post('/out', async (req, res) => {
     if (err.message === 'INSUFFICIENT_STOCK') {
       return res.status(409).json({ error: 'Not enough stock available for this quantity' })
     }
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.get('/product/:productId', requireAuth, async (req, res) => {
+  try {
+    const movements = await stockMovementModel.getMovementsByProduct(req.params.productId, req.user.businessId)
+    res.json(movements)
+  } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
