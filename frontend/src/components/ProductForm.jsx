@@ -1,195 +1,259 @@
 import { useState, useEffect } from 'react'
-import ProductForm from '../components/ProductForm'
-import StockBadge from '../components/StockBadge'
-import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchSuppliers } from '../services/api'
+import { fetchCategories, fetchSuppliers, createCategory, createSupplier } from '../services/api'
 
-function Products() {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [showForm, setShowForm] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categories, setCategories] = useState([])
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [suppliers, setSuppliers] = useState([])
-  const [supplierFilter, setSupplierFilter] = useState('')
-
-  const filteredProducts = products.filter((product) => {
-    const term = searchTerm.toLowerCase()
-    const matchesSearch =
-      product.name.toLowerCase().includes(term) ||
-      (product.sku && product.sku.toLowerCase().includes(term))
-    const matchesCategory = categoryFilter === '' || product.category_id === Number(categoryFilter)
-    const matchesSupplier = supplierFilter === '' || product.supplier_id === Number(supplierFilter)
-    return matchesSearch && matchesCategory && matchesSupplier
+function ProductForm({ onSubmit, onCancel, initialData }) {
+  const [formData, setFormData] = useState({
+    name: initialData?.name || '',
+    sku: initialData?.sku || '',
+    category_id: initialData?.category_id || '',
+    supplier_id: initialData?.supplier_id || '',
+    selling_price: initialData?.selling_price || '',
+    cost_price: initialData?.cost_price || '',
+    quantity: initialData?.quantity || '',
+    minimum_stock: initialData?.minimum_stock || '',
+    description: initialData?.description || '',
+    status: initialData?.status || 'active',
   })
 
-  function loadProducts() {
-    setLoading(true)
-    fetchProducts()
-      .then((data) => {
-        setProducts(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }
+  const [categories, setCategories] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [errors, setErrors] = useState({})
+
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+
+  const [creatingSupplier, setCreatingSupplier] = useState(false)
+  const [newSupplierName, setNewSupplierName] = useState('')
 
   useEffect(() => {
-    loadProducts()
-    fetchCategories().then(setCategories).catch(() => setCategories([]))
-    fetchSuppliers().then(setSuppliers).catch(() => setSuppliers([]))
+    async function loadData() {
+      try {
+        const [categoriesData, suppliersData] = await Promise.all([
+          fetchCategories(),
+          fetchSuppliers(),
+        ])
+        setCategories(categoriesData)
+        setSuppliers(suppliersData)
+      } catch (error) {
+        console.error('Failed to load categories or suppliers:', error)
+      }
+    }
+    loadData()
   }, [])
 
-  async function handleAddProduct(formData) {
-    try {
-      await createProduct(formData)
-      setShowForm(false)
-      loadProducts()
-    } catch (err) {
-      setError(err.message)
+  function handleChange(e) {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }))
     }
   }
 
-  async function handleUpdateProduct(formData) {
-    try {
-      await updateProduct(editingProduct.id, formData)
-      setEditingProduct(null)
-      loadProducts()
-    } catch (err) {
-      setError(err.message)
+  function validate() {
+    const newErrors = {}
+    if (!formData.name.trim()) newErrors.name = 'Name is required'
+    if (formData.selling_price === '' || Number(formData.selling_price) <= 0) {
+      newErrors.selling_price = 'Selling price must be greater than 0'
     }
+    if (formData.cost_price === '' || Number(formData.cost_price) < 0) {
+      newErrors.cost_price = 'Cost price must be 0 or greater'
+    }
+    if (formData.quantity === '' || Number(formData.quantity) < 0) {
+      newErrors.quantity = 'Quantity must be 0 or greater'
+    }
+    if (formData.minimum_stock !== '' && Number(formData.minimum_stock) < 0) {
+      newErrors.minimum_stock = 'Minimum stock must be 0 or greater'
+    }
+    if (creatingCategory && !newCategoryName.trim()) {
+      newErrors.category = 'Category name is required'
+    }
+    if (creatingSupplier && !newSupplierName.trim()) {
+      newErrors.supplier = 'Supplier name is required'
+    }
+    return newErrors
   }
 
-  async function handleDeleteProduct(product) {
-    const confirmed = window.confirm(`Delete "${product.name}"? This cannot be undone.`)
-    if (!confirmed) return
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const validationErrors = validate()
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
 
     try {
-      await deleteProduct(product.id)
-      loadProducts()
-    } catch (err) {
-      setError(err.message)
+      let categoryId = formData.category_id === '' ? null : Number(formData.category_id)
+      let supplierId = formData.supplier_id === '' ? null : Number(formData.supplier_id)
+
+      if (creatingCategory) {
+        const newCategory = await createCategory({ name: newCategoryName.trim(), status: 'active' })
+        categoryId = newCategory.id
+        setCategories((prev) => [...prev, newCategory])
+      }
+
+      if (creatingSupplier) {
+        const newSupplier = await createSupplier({ name: newSupplierName.trim() })
+        supplierId = newSupplier.id
+        setSuppliers((prev) => [...prev, newSupplier])
+      }
+
+      const cleanedData = {
+        ...formData,
+        sku: formData.sku.trim() === '' ? null : formData.sku.trim(),
+        category_id: categoryId,
+        supplier_id: supplierId,
+        selling_price: Number(formData.selling_price),
+        cost_price: Number(formData.cost_price),
+        quantity: Number(formData.quantity),
+        minimum_stock: formData.minimum_stock === '' ? 0 : Number(formData.minimum_stock),
+        description: formData.description.trim() === '' ? null : formData.description.trim(),
+      }
+
+      await onSubmit(cleanedData)
+    } catch (error) {
+      console.error('Failed to save product:', error)
+      setErrors({ submit: 'Failed to save product. Please try again.' })
     }
-  }
-
-  function startEdit(product) {
-    setEditingProduct(product)
-    setShowForm(false)
-  }
-
-  if (loading) {
-    return <p>Loading products...</p>
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Products</h2>
-        {!showForm && !editingProduct && (
-          <button onClick={() => setShowForm(true)}>+ Add Product</button>
-        )}
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px' }}>
+      <div>
+        <label>Name</label>
+        <input name="name" value={formData.name} onChange={handleChange} placeholder="Product name" />
+        {errors.name && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.name}</p>}
       </div>
 
-      {!showForm && !editingProduct && (
-        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-          <input
-            type="text"
-            placeholder="Search by name or SKU..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '8px', width: '100%', maxWidth: '300px' }}
-          />
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{ padding: '8px' }}
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-          <select
-            value={supplierFilter}
-            onChange={(e) => setSupplierFilter(e.target.value)}
-            style={{ padding: '8px' }}
-          >
-            <option value="">All Suppliers</option>
-            {suppliers.map((sup) => (
-              <option key={sup.id} value={sup.id}>{sup.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div>
+        <label>SKU (optional)</label>
+        <input name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g. PROD-001" />
+      </div>
 
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      <div>
+        <label>Category</label>
+        <select
+          name="category_id"
+          value={creatingCategory ? '__new__' : formData.category_id}
+          onChange={(e) => {
+            const value = e.target.value
+            if (value === '__new__') {
+              setCreatingCategory(true)
+              setFormData((prev) => ({ ...prev, category_id: '' }))
+            } else {
+              setCreatingCategory(false)
+              setNewCategoryName('')
+              setFormData((prev) => ({ ...prev, category_id: value }))
+            }
+          }}
+        >
+          <option value="">-- No category --</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+          <option value="__new__">+ Add new category...</option>
+        </select>
 
-      {showForm && (
-        <ProductForm
-          onSubmit={handleAddProduct}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
+        {creatingCategory && (
+          <div style={{ marginTop: '6px', display: 'flex', gap: '6px' }}>
+            <input
+              type="text"
+              placeholder="New category name"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+            />
+            <button type="button" onClick={() => { setCreatingCategory(false); setNewCategoryName('') }}>
+              Cancel
+            </button>
+          </div>
+        )}
+        {errors.category && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.category}</p>}
+      </div>
 
-      {editingProduct && (
-        <ProductForm
-          initialData={editingProduct}
-          onSubmit={handleUpdateProduct}
-          onCancel={() => setEditingProduct(null)}
-        />
-      )}
+      <div>
+        <label>Supplier</label>
+        <select
+          name="supplier_id"
+          value={creatingSupplier ? '__new__' : formData.supplier_id}
+          onChange={(e) => {
+            const value = e.target.value
+            if (value === '__new__') {
+              setCreatingSupplier(true)
+              setFormData((prev) => ({ ...prev, supplier_id: '' }))
+            } else {
+              setCreatingSupplier(false)
+              setNewSupplierName('')
+              setFormData((prev) => ({ ...prev, supplier_id: value }))
+            }
+          }}
+        >
+          <option value="">-- No supplier --</option>
+          {suppliers.map((sup) => (
+            <option key={sup.id} value={sup.id}>{sup.name}</option>
+          ))}
+          <option value="__new__">+ Add new supplier...</option>
+        </select>
 
-      {!showForm && !editingProduct && filteredProducts.length === 0 && (
-        <p>
-          {searchTerm
-            ? `No products match "${searchTerm}"`
-            : 'No products found. Add your first product to get started.'}
-        </p>
-      )}
+        {creatingSupplier && (
+          <div style={{ marginTop: '6px', display: 'flex', gap: '6px' }}>
+            <input
+              type="text"
+              placeholder="New supplier name"
+              value={newSupplierName}
+              onChange={(e) => setNewSupplierName(e.target.value)}
+            />
+            <button type="button" onClick={() => { setCreatingSupplier(false); setNewSupplierName('') }}>
+              Cancel
+            </button>
+          </div>
+        )}
+        {errors.supplier && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.supplier}</p>}
+      </div>
 
-      {!showForm && !editingProduct && filteredProducts.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '8px' }}>Name</th>
-              <th style={{ padding: '8px' }}>Category</th>
-              <th style={{ padding: '8px' }}>Supplier</th>
-              <th style={{ padding: '8px' }}>SKU</th>
-              <th style={{ padding: '8px' }}>Price</th>
-              <th style={{ padding: '8px' }}>Quantity</th>
-              <th style={{ padding: '8px' }}>Stock Status</th>
-              <th style={{ padding: '8px' }}>Status</th>
-              <th style={{ padding: '8px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((product) => (
-              <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px' }}>{product.name}</td>
-                <td style={{ padding: '8px' }}>{product.category_name || '—'}</td>
-                <td style={{ padding: '8px' }}>{product.supplier_name || '—'}</td>
-                <td style={{ padding: '8px' }}>{product.sku}</td>
-                <td style={{ padding: '8px' }}>${product.selling_price}</td>
-                <td style={{ padding: '8px' }}>{product.quantity}</td>
-                <td style={{ padding: '8px' }}><StockBadge product={product} /></td>
-                <td style={{ padding: '8px' }}>{product.status}</td>
-                <td style={{ padding: '8px' }}>
-                  <button onClick={() => startEdit(product)}>Edit</button>
-                  <button onClick={() => handleDeleteProduct(product)} style={{ marginLeft: '8px', color: 'red' }}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+      <div>
+        <label>Selling Price</label>
+        <input name="selling_price" type="number" step="0.01" min="0" value={formData.selling_price} onChange={handleChange} placeholder="0.00" />
+        {errors.selling_price && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.selling_price}</p>}
+      </div>
+
+      <div>
+        <label>Cost Price</label>
+        <input name="cost_price" type="number" step="0.01" min="0" value={formData.cost_price} onChange={handleChange} placeholder="0.00" />
+        {errors.cost_price && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.cost_price}</p>}
+      </div>
+
+      <div>
+        <label>Quantity</label>
+        <input name="quantity" type="number" min="0" value={formData.quantity} onChange={handleChange} placeholder="0" />
+        {errors.quantity && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.quantity}</p>}
+      </div>
+
+      <div>
+        <label>Minimum Stock</label>
+        <input name="minimum_stock" type="number" min="0" value={formData.minimum_stock} onChange={handleChange} placeholder="0" />
+        {errors.minimum_stock && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.minimum_stock}</p>}
+      </div>
+
+      <div>
+        <label>Description</label>
+        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Product description" rows="4" />
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select name="status" value={formData.status} onChange={handleChange}>
+          <option value="active">Active</option>
+          <option value="discontinued">Discontinued</option>
+        </select>
+      </div>
+
+      {errors.submit && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.submit}</p>}
+
+      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+        <button type="submit">Save Product</button>
+        <button type="button" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
   )
 }
 
-export default Products
+export default ProductForm

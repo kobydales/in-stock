@@ -37,6 +37,7 @@ function StockOut() {
       setProductId('')
       setQuantity('')
       setNotes('')
+      fetchProducts().then(setProducts)
     } catch (err) {
       setError(err.message)
     }

@@ -10,13 +10,16 @@ import Categories from './pages/Categories'
 import StockIn from './pages/StockIn'
 import StockOut from './pages/StockOut'
 import LowStock from './pages/LowStock'
-
+import Login from './pages/Login'
+import Signup from './pages/Signup'
 
 function App() {
   return (
     <BrowserRouter>
       <MainLayout>
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/products" element={<Products />} />

@@ -13,35 +13,37 @@ function StockIn() {
     fetchProducts().then(setProducts).catch(() => setProducts([]))
   }, [])
 
+  
+
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
+  e.preventDefault()
+  setError(null)
+  setSuccess(null)
 
-    if (!productId) {
-      setError('Please select a product')
-      return
-    }
-    if (!quantity || Number(quantity) <= 0) {
-      setError('Quantity must be greater than 0')
-      return
-    }
-
-    try {
-      const result = await stockIn({
-        product_id: Number(productId),
-        quantity: Number(quantity),
-        notes,
-      })
-      setSuccess(`Stock updated. New quantity: ${result.newQuantity}`)
-      setProductId('')
-      setQuantity('')
-      setNotes('')
-    } catch (err) {
-      setError(err.message)
-    }
+  if (!productId) {
+    setError('Please select a product')
+    return
+  }
+  if (!quantity || Number(quantity) <= 0) {
+    setError('Quantity must be greater than 0')
+    return
   }
 
+  try {
+    const result = await stockIn({
+      product_id: Number(productId),
+      quantity: Number(quantity),
+      notes,
+    })
+    setSuccess(`Stock updated. New quantity: ${result.newQuantity}`)
+    setProductId('')
+    setQuantity('')
+    setNotes('')
+    fetchProducts().then(setProducts)
+  } catch (err) {
+    setError(err.message)
+  }
+}
   return (
     <div>
       <h2>Stock In</h2>

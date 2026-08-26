@@ -27,8 +27,8 @@ function LowStock() {
       <h2>Low & Out of Stock</h2>
 
       {products.length === 0 ? (
-        <p>All products are sufficiently stocked. 🎉</p>
-      ) : (
+        <p>No products with low or out-of-stock status right now.</p>
+        ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
