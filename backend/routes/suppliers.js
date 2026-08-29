@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const supplierModel = require('../models/supplierModel')
-const { requireAuth } = require('../middleware/auth')
+const { requireAuth, requireAdmin } = require('../middleware/auth')
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -22,7 +22,7 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 })
 
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const newSupplier = await supplierModel.createSupplier(req.body, req.user.businessId)
     res.status(201).json(newSupplier)
@@ -31,7 +31,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const updated = await supplierModel.updateSupplier(req.params.id, req.body, req.user.businessId)
     if (!updated) return res.status(404).json({ error: 'Supplier not found' })
@@ -41,7 +41,7 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 })
 
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const deleted = await supplierModel.deleteSupplier(req.params.id, req.user.businessId)
     if (!deleted) {

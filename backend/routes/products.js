@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const productModel = require('../models/productModel')
-const { requireAuth } = require('../middleware/auth')
+const { requireAuth, requireAdmin } = require('../middleware/auth')
 
 router.get('/low-stock', requireAuth, async (req, res) => {
   try {
@@ -54,7 +54,7 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 })
 
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const deletedProduct = await productModel.deleteProduct(req.params.id, req.user.businessId)
     if (!deletedProduct) {

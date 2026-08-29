@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from '../services/api'
 import SupplierForm from '../components/SupplierForm'
 import { Link } from 'react-router-dom'
+import { isAdmin } from '../utils/auth'
 
 function Suppliers() {
   const [suppliers, setSuppliers] = useState([])
@@ -71,7 +72,7 @@ function Suppliers() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Suppliers</h2>
-        {!showForm && !editingSupplier && (
+        {isAdmin() && !showForm && !editingSupplier && (
           <button onClick={() => setShowForm(true)}>+ Add Supplier</button>
         )}
       </div>
@@ -109,16 +110,20 @@ function Suppliers() {
             {suppliers.map((supplier) => (
               <tr key={supplier.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px' }}>
-                <Link to={`/products?supplier=${supplier.id}`}>{supplier.name}</Link>
+                  <Link to={`/products?supplier=${supplier.id}`}>{supplier.name}</Link>
                 </td>
                 <td style={{ padding: '8px' }}>{supplier.contact_person || '—'}</td>
                 <td style={{ padding: '8px' }}>{supplier.contact_phone || '—'}</td>
                 <td style={{ padding: '8px' }}>{supplier.contact_email || '—'}</td>
                 <td style={{ padding: '8px' }}>
-                  <button onClick={() => startEdit(supplier)}>Edit</button>
-                  <button onClick={() => handleDeleteSupplier(supplier)} style={{ marginLeft: '8px', color: 'red' }}>
-                    Delete
-                  </button>
+                  {isAdmin() && (
+                    <>
+                      <button onClick={() => startEdit(supplier)}>Edit</button>
+                      <button onClick={() => handleDeleteSupplier(supplier)} style={{ marginLeft: '8px', color: 'red' }}>
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

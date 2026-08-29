@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
 import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchSuppliers } from '../services/api'
 import { useSearchParams } from 'react-router-dom'
-
+import { isAdmin } from '../utils/auth'
 
 function Products() {
   const [products, setProducts] = useState([])
@@ -180,9 +180,11 @@ function Products() {
                 <td style={{ padding: '8px' }}>{product.status}</td>
                 <td style={{ padding: '8px' }}>
                   <button onClick={() => startEdit(product)}>Edit</button>
-                  <button onClick={() => handleDeleteProduct(product)} style={{ marginLeft: '8px', color: 'red' }}>
-                    Delete
-                  </button>
+{isAdmin() && (
+  <button onClick={() => handleDeleteProduct(product)} style={{ marginLeft: '8px', color: 'red' }}>
+    Delete
+  </button>
+)}
                 </td>
               </tr>
             ))}

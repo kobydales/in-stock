@@ -5,6 +5,11 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+export function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+}
+
 export async function fetchTestData() {
   const response = await fetch(`${API_URL}/api/test`)
   if (!response.ok) {

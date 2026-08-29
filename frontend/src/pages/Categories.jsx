@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../services/api'
 import CategoryForm from '../components/CategoryForm'
 import { Link } from 'react-router-dom'
-
+import { isAdmin } from '../utils/auth'
 
 function Categories() {
   const [categories, setCategories] = useState([])
@@ -72,7 +72,7 @@ function Categories() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Categories</h2>
-        {!showForm && !editingCategory && (
+        {isAdmin() && !showForm && !editingCategory && (
           <button onClick={() => setShowForm(true)}>+ Add Category</button>
         )}
       </div>
@@ -109,15 +109,19 @@ function Categories() {
             {categories.map((category) => (
               <tr key={category.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px' }}>
-                <Link to={`/products?category=${category.id}`}>{category.name}</Link>
+                  <Link to={`/products?category=${category.id}`}>{category.name}</Link>
                 </td>
                 <td style={{ padding: '8px' }}>{category.description || '—'}</td>
                 <td style={{ padding: '8px' }}>{category.status}</td>
                 <td style={{ padding: '8px' }}>
-                  <button onClick={() => startEdit(category)}>Edit</button>
-                  <button onClick={() => handleDeleteCategory(category)} style={{ marginLeft: '8px', color: 'red' }}>
-                    Delete
-                  </button>
+                  {isAdmin() && (
+                    <>
+                      <button onClick={() => startEdit(category)}>Edit</button>
+                      <button onClick={() => handleDeleteCategory(category)} style={{ marginLeft: '8px', color: 'red' }}>
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

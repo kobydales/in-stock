@@ -12,25 +12,36 @@ import StockOut from './pages/StockOut'
 import LowStock from './pages/LowStock'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
     <BrowserRouter>
-      <MainLayout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/stock-in" element={<StockIn />} />
-          <Route path="/stock-out" element={<StockOut />} />
-          <Route path="/low-stock" element={<LowStock />} />
-          <Route path="/reports" element={<Reports />} />
-        </Routes>
-      </MainLayout>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/suppliers" element={<Suppliers />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/stock-in" element={<StockIn />} />
+                  <Route path="/stock-out" element={<StockOut />} />
+                  <Route path="/low-stock" element={<LowStock />} />
+                  <Route path="/reports" element={<Reports />} />
+                </Routes>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   )
 }
