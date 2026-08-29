@@ -14,7 +14,9 @@ router.post('/in', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Quantity must be greater than 0' })
     }
 
-    const result = await stockMovementModel.stockIn(Number(product_id), Number(quantity), notes, req.user.businessId)
+    const result = await stockMovementModel.stockIn(
+      Number(product_id), Number(quantity), notes, req.user.businessId, req.user.userId
+    )
     res.status(201).json(result)
   } catch (err) {
     if (err.message === 'Product not found') {
@@ -35,7 +37,9 @@ router.post('/out', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Quantity must be greater than 0' })
     }
 
-    const result = await stockMovementModel.stockOut(Number(product_id), Number(quantity), notes, req.user.businessId)
+    const result = await stockMovementModel.stockOut(
+      Number(product_id), Number(quantity), notes, req.user.businessId, req.user.userId
+    )
     res.status(201).json(result)
   } catch (err) {
     if (err.message === 'Product not found') {
@@ -51,6 +55,15 @@ router.post('/out', requireAuth, async (req, res) => {
 router.get('/product/:productId', requireAuth, async (req, res) => {
   try {
     const movements = await stockMovementModel.getMovementsByProduct(req.params.productId, req.user.businessId)
+    res.json(movements)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const movements = await stockMovementModel.getAllMovements(req.user.businessId)
     res.json(movements)
   } catch (err) {
     res.status(500).json({ error: err.message })

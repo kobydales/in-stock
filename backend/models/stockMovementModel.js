@@ -1,6 +1,7 @@
 const pool = require('../db')
 
-async function stockIn(productId, quantity, notes, businessId) {
+
+async function stockIn(productId, quantity, notes, businessId, userId) {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -22,10 +23,10 @@ async function stockIn(productId, quantity, notes, businessId) {
     )
 
     const movementResult = await client.query(
-      `INSERT INTO stock_movements (product_id, quantity, movement_type, notes, business_id)
-       VALUES ($1, $2, 'in', $3, $4)
+      `INSERT INTO stock_movements (product_id, quantity, movement_type, notes, business_id, user_id)
+       VALUES ($1, $2, 'in', $3, $4, $5)
        RETURNING *`,
-      [productId, quantity, notes, businessId]
+      [productId, quantity, notes, businessId, userId]
     )
 
     await client.query('COMMIT')
@@ -38,7 +39,7 @@ async function stockIn(productId, quantity, notes, businessId) {
   }
 }
 
-async function stockOut(productId, quantity, notes, businessId) {
+async function stockOut(productId, quantity, notes, businessId, userId) {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -64,10 +65,10 @@ async function stockOut(productId, quantity, notes, businessId) {
     )
 
     const movementResult = await client.query(
-      `INSERT INTO stock_movements (product_id, quantity, movement_type, notes, business_id)
-       VALUES ($1, $2, 'out', $3, $4)
+      `INSERT INTO stock_movements (product_id, quantity, movement_type, notes, business_id, user_id)
+       VALUES ($1, $2, 'out', $3, $4, $5)
        RETURNING *`,
-      [productId, quantity, notes, businessId]
+      [productId, quantity, notes, businessId, userId]
     )
 
     await client.query('COMMIT')
@@ -88,8 +89,22 @@ async function getMovementsByProduct(productId, businessId) {
   return result.rows
 }
 
+async function getAllMovements(businessId) {
+  const result = await pool.query(
+    `SELECT stock_movements.*, products.name AS product_name, users.name AS user_name
+     FROM stock_movements
+     JOIN products ON stock_movements.product_id = products.id
+     LEFT JOIN users ON stock_movements.user_id = users.id
+     WHERE stock_movements.business_id = $1
+     ORDER BY stock_movements.created_at DESC`,
+    [businessId]
+  )
+  return result.rows
+}
+
 module.exports = {
   stockIn,
   stockOut,
   getMovementsByProduct,
+  getAllMovements,
 }
