@@ -246,3 +246,39 @@ export async function fetchAllMovements() {
   if (!response.ok) throw new Error('Failed to fetch history')
   return response.json()
 }
+
+
+export async function fetchInventoryReport() {
+  const response = await fetch(`${API_URL}/api/reports/inventory`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch inventory report')
+  return response.json()
+}
+
+export async function fetchLowStockReport() {
+  const response = await fetch(`${API_URL}/api/reports/low-stock`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch low-stock report')
+  return response.json()
+}
+
+export async function fetchMostMovedReport() {
+  const response = await fetch(`${API_URL}/api/reports/most-moved`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch most-moved report')
+  return response.json()
+}
+
+export async function fetchStockMovementReport(startDate, endDate) {
+  const params = new URLSearchParams()
+  if (startDate) params.set('startDate', startDate)
+  if (endDate) params.set('endDate', endDate)
+  const response = await fetch(`${API_URL}/api/reports/stock-movements?${params}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch stock movement report')
+  return response.json()
+}
