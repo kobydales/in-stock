@@ -9,6 +9,7 @@ const supplierRoutes = require('./routes/suppliers')
 const stockMovementRoutes = require('./routes/stockMovements')
 const dashboardRoutes = require('./routes/dashboard')
 const authRoutes = require('./routes/auth')
+const reportRoutes = require('./routes/reports')
 
 app.use(cors())
 app.use(express.json())
@@ -18,6 +19,8 @@ app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/stock-movements', stockMovementRoutes)
+app.use('/api/reports', reportRoutes)
+
 
 app.get('/', (req, res) => {
   res.send('In-Stock API is running')
