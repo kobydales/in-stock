@@ -81,22 +81,38 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
       return
     }
 
-    try {
-      let categoryId = formData.category_id === '' ? null : Number(formData.category_id)
-      let supplierId = formData.supplier_id === '' ? null : Number(formData.supplier_id)
+    let categoryId = formData.category_id === '' ? null : Number(formData.category_id)
+    let supplierId = formData.supplier_id === '' ? null : Number(formData.supplier_id)
 
-      if (creatingCategory) {
+    if (creatingCategory) {
+      try {
         const newCategory = await createCategory({ name: newCategoryName.trim(), status: 'active' })
         categoryId = newCategory.id
         setCategories((prev) => [...prev, newCategory])
+      } catch (err) {
+        const message = err.message.includes('Admin access required')
+          ? 'Only admins can create new categories'
+          : 'Failed to create category'
+        setErrors({ ...errors, category: message })
+        return
       }
+    }
 
-      if (creatingSupplier) {
+    if (creatingSupplier) {
+      try {
         const newSupplier = await createSupplier({ name: newSupplierName.trim() })
         supplierId = newSupplier.id
         setSuppliers((prev) => [...prev, newSupplier])
+      } catch (err) {
+        const message = err.message.includes('Admin access required')
+          ? 'Only admins can create new suppliers'
+          : 'Failed to create supplier'
+        setErrors({ ...errors, supplier: message })
+        return
       }
+    }
 
+    try {
       const cleanedData = {
         ...formData,
         sku: formData.sku.trim() === '' ? null : formData.sku.trim(),

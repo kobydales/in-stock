@@ -13,6 +13,7 @@ import LowStock from './pages/LowStock'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ProtectedRoute from './components/ProtectedRoute'
+import History from './pages/History'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/stock-out" element={<StockOut />} />
                   <Route path="/low-stock" element={<LowStock />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/history" element={<History />} />
                 </Routes>
               </MainLayout>
             </ProtectedRoute>

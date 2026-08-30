@@ -103,7 +103,10 @@ export async function createCategory(category) {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(category),
   })
-  if (!response.ok) throw new Error('Failed to create category')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to create category')
+  }
   return response.json()
 }
 
@@ -113,7 +116,10 @@ export async function updateCategory(id, category) {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(category),
   })
-  if (!response.ok) throw new Error('Failed to update category')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to update category')
+  }
   return response.json()
 }
 
@@ -122,7 +128,10 @@ export async function deleteCategory(id) {
     method: 'DELETE',
     headers: { ...authHeaders() },
   })
-  if (!response.ok) throw new Error('Failed to delete category')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to delete category')
+  }
   return response.json()
 }
 
@@ -140,7 +149,10 @@ export async function createSupplier(supplier) {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(supplier),
   })
-  if (!response.ok) throw new Error('Failed to create supplier')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to create supplier')
+  }
   return response.json()
 }
 
@@ -150,7 +162,10 @@ export async function updateSupplier(id, supplier) {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(supplier),
   })
-  if (!response.ok) throw new Error('Failed to update supplier')
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || 'Failed to update supplier')
+  }
   return response.json()
 }
 
@@ -221,5 +236,13 @@ export async function fetchMovementChart() {
     headers: { ...authHeaders() },
   })
   if (!response.ok) throw new Error('Failed to fetch chart data')
+  return response.json()
+}
+
+export async function fetchAllMovements() {
+  const response = await fetch(`${API_URL}/api/stock-movements`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch history')
   return response.json()
 }

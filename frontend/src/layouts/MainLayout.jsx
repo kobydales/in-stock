@@ -25,6 +25,7 @@ function MainLayout({ children }) {
           <Link to="/stock-in">Stock In</Link>
           <Link to="/stock-out">Stock Out</Link>
           <Link to="/low-stock">Low Stock</Link>
+          <Link to="/history">History</Link>
           <Link to="/reports">Reports</Link>
 
           <button
