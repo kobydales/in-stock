@@ -1,5 +1,5 @@
 const pool = require('../db')
-
+const notificationModel = require('./notificationModel')
 
 async function stockIn(productId, quantity, notes, businessId, userId) {
   const client = await pool.connect()
@@ -72,6 +72,17 @@ async function stockOut(productId, quantity, notes, businessId, userId) {
     )
 
     await client.query('COMMIT')
+
+    if (newQuantity === 0) {
+      await notificationModel.createNotification(
+        businessId, productId, `${product.name} is now out of stock`
+      )
+    } else if (newQuantity <= product.minimum_stock && product.quantity > product.minimum_stock) {
+      await notificationModel.createNotification(
+        businessId, productId, `${product.name} is now low on stock (${newQuantity} remaining)`
+      )
+    }
+
     return { movement: movementResult.rows[0], newQuantity }
   } catch (err) {
     await client.query('ROLLBACK')
