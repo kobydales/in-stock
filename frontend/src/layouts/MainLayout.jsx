@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import './MainLayout.css'
 import { logout } from '../services/api'
+import NotificationBell from '../components/NotificationBell'
 
 function MainLayout({ children }) {
   const navigate = useNavigate()
@@ -38,9 +39,10 @@ function MainLayout({ children }) {
       </aside>
 
       <div className="main-area">
-        <header className="header">
-          <h1>Dashboard</h1>
-        </header>
+       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <h1>Dashboard</h1>
+  <NotificationBell />
+</header>
 
         <main className="content">
           {children}

@@ -282,3 +282,37 @@ export async function fetchStockMovementReport(startDate, endDate) {
   if (!response.ok) throw new Error('Failed to fetch stock movement report')
   return response.json()
 }
+
+export async function fetchNotifications() {
+  const response = await fetch(`${API_URL}/api/notifications`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch notifications')
+  return response.json()
+}
+
+export async function fetchUnreadCount() {
+  const response = await fetch(`${API_URL}/api/notifications/unread-count`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch unread count')
+  return response.json()
+}
+
+export async function markNotificationRead(id) {
+  const response = await fetch(`${API_URL}/api/notifications/${id}/read`, {
+    method: 'PUT',
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to mark notification as read')
+  return response.json()
+}
+
+export async function markAllNotificationsRead() {
+  const response = await fetch(`${API_URL}/api/notifications/read-all`, {
+    method: 'PUT',
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to mark all as read')
+  return response.json()
+}
