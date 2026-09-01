@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
+import StockBadge from '../components/StockBadge'
 import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchCategories, fetchSuppliers } from '../services/api'
 import { useSearchParams } from 'react-router-dom'
 import { isAdmin } from '../utils/auth'
@@ -16,7 +17,10 @@ function Products() {
   const [searchParams] = useSearchParams()
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || '')
   const [supplierFilter, setSupplierFilter] = useState(searchParams.get('supplier') || '')
-  
+  const [sortField, setSortField] = useState('name')
+  const [sortDirection, setSortDirection] = useState('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const rowsPerPage = 10
 
   const filteredProducts = products.filter((product) => {
     const term = searchTerm.toLowerCase()
@@ -27,6 +31,34 @@ function Products() {
     const matchesSupplier = supplierFilter === '' || product.supplier_id === Number(supplierFilter)
     return matchesSearch && matchesCategory && matchesSupplier
   })
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    let valA = a[sortField]
+    let valB = b[sortField]
+
+    if (typeof valA === 'string') valA = valA.toLowerCase()
+    if (typeof valB === 'string') valB = valB.toLowerCase()
+
+    if (valA < valB) return sortDirection === 'asc' ? -1 : 1
+    if (valA > valB) return sortDirection === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const totalPages = Math.ceil(sortedProducts.length / rowsPerPage)
+  const paginatedProducts = sortedProducts.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  )
+
+  function handleSort(field) {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+    setCurrentPage(1)
+  }
 
   function loadProducts() {
     setLoading(true)
@@ -155,41 +187,69 @@ function Products() {
       )}
 
       {!showForm && !editingProduct && filteredProducts.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '8px' }}>Name</th>
-              <th style={{ padding: '8px' }}>Category</th>
-              <th style={{ padding: '8px' }}>Supplier</th>
-              <th style={{ padding: '8px' }}>SKU</th>
-              <th style={{ padding: '8px' }}>Price</th>
-              <th style={{ padding: '8px' }}>Quantity</th>
-              <th style={{ padding: '8px' }}>Status</th>
-              <th style={{ padding: '8px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((product) => (
-              <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px' }}>{product.name}</td>
-                <td style={{ padding: '8px' }}>{product.category_name || '—'}</td>
-                <td style={{ padding: '8px' }}>{product.supplier_name || '—'}</td>
-                <td style={{ padding: '8px' }}>{product.sku}</td>
-                <td style={{ padding: '8px' }}>${product.selling_price}</td>
-                <td style={{ padding: '8px' }}>{product.quantity}</td>
-                <td style={{ padding: '8px' }}>{product.status}</td>
-                <td style={{ padding: '8px' }}>
-                  <button onClick={() => startEdit(product)}>Edit</button>
-{isAdmin() && (
-  <button onClick={() => handleDeleteProduct(product)} style={{ marginLeft: '8px', color: 'red' }}>
-    Delete
-  </button>
-)}
-                </td>
+        <>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
+                <th style={{ padding: '8px', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                  Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th style={{ padding: '8px' }}>Category</th>
+                <th style={{ padding: '8px' }}>Supplier</th>
+                <th style={{ padding: '8px' }}>SKU</th>
+                <th style={{ padding: '8px', cursor: 'pointer' }} onClick={() => handleSort('selling_price')}>
+                  Price {sortField === 'selling_price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th style={{ padding: '8px', cursor: 'pointer' }} onClick={() => handleSort('quantity')}>
+                  Quantity {sortField === 'quantity' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th style={{ padding: '8px' }}>Stock Status</th>
+                <th style={{ padding: '8px' }}>Status</th>
+                <th style={{ padding: '8px' }}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedProducts.map((product) => (
+                <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '8px' }}>{product.name}</td>
+                  <td style={{ padding: '8px' }}>{product.category_name || '—'}</td>
+                  <td style={{ padding: '8px' }}>{product.supplier_name || '—'}</td>
+                  <td style={{ padding: '8px' }}>{product.sku}</td>
+                  <td style={{ padding: '8px' }}>${product.selling_price}</td>
+                  <td style={{ padding: '8px' }}>{product.quantity}</td>
+                  <td style={{ padding: '8px' }}><StockBadge product={product} /></td>
+                  <td style={{ padding: '8px' }}>{product.status}</td>
+                  <td style={{ padding: '8px' }}>
+                    <button onClick={() => startEdit(product)}>Edit</button>
+                    {isAdmin() && (
+                      <button onClick={() => handleDeleteProduct(product)} style={{ marginLeft: '8px', color: 'red' }}>
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px' }}>
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Previous
+              </button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
