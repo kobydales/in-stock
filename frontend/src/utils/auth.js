@@ -7,3 +7,8 @@ export function isAdmin() {
   const user = getCurrentUser()
   return user?.role === 'admin'
 }
+
+export function isPlatformOwner() {
+  const user = getCurrentUser()
+  return Boolean(user?.platformOwner)
+}

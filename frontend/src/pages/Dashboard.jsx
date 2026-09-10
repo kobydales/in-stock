@@ -1,20 +1,43 @@
-import { useState, useEffect } from 'react'
-import { fetchDashboardStats, fetchRecentMovements, fetchMovementChart } from '../services/api'
+import { useState, useEffect, useMemo } from 'react'
+import { fetchDashboardStats, fetchRecentMovements, fetchMovementChart, fetchLowStockProducts, fetchProductVelocity } from '../services/api'
 import { Link } from 'react-router-dom'
+import { getCurrentUser, isAdmin } from '../utils/auth'
+import Icon from '../components/Icon'
+import DateRangePicker from '../components/DateRangePicker'
+import { DATE_RANGE_PRESETS } from '../utils/dateRange'
+import AdinkraWatermark from '../components/AdinkraWatermark'
+import AdinkraIcon from '../components/AdinkraIcon'
+import { capitalizeWords } from '../utils/textFormat'
+import './Dashboard.css'
 
 function Dashboard() {
   const [stats, setStats] = useState(null)
   const [movements, setMovements] = useState([])
   const [chartData, setChartData] = useState([])
+  const [chartDays, setChartDays] = useState(7)
+  const [chartLoading, setChartLoading] = useState(false)
+  const [lowStockProducts, setLowStockProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fastestMoving, setFastestMoving] = useState([])
+  const [slowestMoving, setSlowestMoving] = useState([])
+  const userIsAdmin = isAdmin()
   const [error, setError] = useState(null)
+  const user = getCurrentUser()
+  const rawName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
+  const name = user?.name ? capitalizeWords(rawName) : rawName
 
   useEffect(() => {
-    Promise.all([fetchDashboardStats(), fetchRecentMovements(), fetchMovementChart()])
-      .then(([statsData, movementsData, chartDataRes]) => {
+    Promise.all([
+      fetchDashboardStats(),
+      fetchRecentMovements(),
+      fetchMovementChart(chartDays),
+      fetchLowStockProducts(),
+    ])
+      .then(([statsData, movementsData, chartDataRes, lowStockData]) => {
         setStats(statsData)
         setMovements(movementsData)
         setChartData(chartDataRes)
+        setLowStockProducts(lowStockData)
         setLoading(false)
       })
       .catch((err) => {
@@ -23,107 +46,201 @@ function Dashboard() {
       })
   }, [])
 
-  if (loading) return <p>Loading dashboard...</p>
-  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>
+  useEffect(() => {
+    if (!userIsAdmin) return
+    Promise.all([fetchProductVelocity('most', 4), fetchProductVelocity('least', 4)])
+      .then(([fastest, slowest]) => {
+        setFastestMoving(fastest)
+        setSlowestMoving(slowest)
+      })
+      .catch(() => {
+        // Non-critical for the dashboard as a whole — the rest of the page
+        // still works if this one section fails to load.
+      })
+  }, [userIsAdmin])
 
-  const cardStyle = {
-    flex: 1,
-    padding: '16px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    textAlign: 'center',
+  function handleChartRangeChange(days) {
+    setChartDays(days)
+    setChartLoading(true)
+    fetchMovementChart(days)
+      .then((data) => {
+        setChartData(data)
+        setChartLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setChartLoading(false)
+      })
   }
 
+  const chartBars = useMemo(() => {
+    if (!chartData.length) return []
+    const max = Math.max(...chartData.map((row) => Number(row.total) || 0), 1)
+    return chartData.map((row, i) => ({
+      ...row,
+      height: Math.max(8, ((Number(row.total) || 0) / max) * 130),
+      symbol: row.movement_type === 'in' ? (i % 2 === 0 ? 'nyameDua' : 'mpatapo') : (i % 2 === 0 ? 'sankofa' : 'dwennimmen'),
+    }))
+  }, [chartData])
+
+  if (loading) {
+    return <div className="dashboard-loading"><div className="loading-spinner" /> Loading your dashboard...</div>
+  }
+
+  if (error) {
+    return <div className="dashboard-error"><strong>We couldn't load the dashboard.</strong><span>{error}</span></div>
+  }
+
+  const statCards = [
+    { label: 'Total Products', value: stats.totalProducts, detail: 'Items in your catalogue', icon: 'package', tone: 'green', link: '/products' },
+    { label: 'Total Stock', value: stats.totalQuantity, detail: 'Units currently available', icon: 'box', tone: 'gold' },
+    { label: 'Out of Stock', value: stats.outOfStock, detail: 'Currently unavailable', icon: 'package', tone: 'red', link: '/low-stock' },
+  ]
+
   return (
-    <div>
-      <h2>Dashboard</h2>
-
-      <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '0.85em', color: '#666' }}>Total Products</div>
-          <div style={{ fontSize: '1.8em', fontWeight: 'bold' }}>{stats.totalProducts}</div>
+    <div className="dashboard-page">
+      <AdinkraWatermark name="gyeNyame" className="dashboard-watermark dashboard-watermark-one" />
+      <AdinkraWatermark name="sankofa" className="dashboard-watermark dashboard-watermark-two" />
+      <section className="dashboard-intro">
+        <div>
+          <p className="eyebrow">INVENTORY OVERVIEW</p>
+          <h2>Akwaba, {name} <span aria-hidden="true">👋</span></h2>
+          <p>Here&apos;s what&apos;s happening with your inventory today.</p>
         </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '0.85em', color: '#666' }}>Total Stock</div>
-          <div style={{ fontSize: '1.8em', fontWeight: 'bold' }}>{stats.totalQuantity}</div>
+        <div className="quick-actions">
+          <Link to="/stock-in" className="quick-action quick-action-in">
+            <span className="quick-action-icon"><AdinkraIcon name="nyameDua" /></span>
+            <span><strong>Stock In</strong><small>Add stock</small></span>
+          </Link>
+          <Link to="/stock-out" className="quick-action quick-action-out">
+            <span className="quick-action-icon"><AdinkraIcon name="sankofa" /></span>
+            <span><strong>Stock Out</strong><small>Remove stock</small></span>
+          </Link>
+          <Link to="/products" className="quick-action quick-action-product">
+            <span className="quick-action-icon"><AdinkraIcon name="mpatapo" /></span>
+            <span><strong>Add Product</strong><small>New item</small></span>
+          </Link>
         </div>
+      </section>
 
-        <Link to="/low-stock" style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
-          <div style={{ ...cardStyle, borderColor: stats.lowStock > 0 ? '#e0a800' : '#ddd', cursor: 'pointer' }}>
-            <div style={{ fontSize: '0.85em', color: '#666' }}>Low Stock</div>
-            <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.lowStock > 0 ? '#e0a800' : 'inherit' }}>
-              {stats.lowStock}
-            </div>
-          </div>
-        </Link>
-
-        <Link to="/low-stock" style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
-          <div style={{ ...cardStyle, borderColor: stats.outOfStock > 0 ? '#d9534f' : '#ddd', cursor: 'pointer' }}>
-            <div style={{ fontSize: '0.85em', color: '#666' }}>Out of Stock</div>
-            <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: stats.outOfStock > 0 ? '#d9534f' : 'inherit' }}>
-              {stats.outOfStock}
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      <div style={{ marginTop: '24px' }}>
-        <h3>Stock Movement (Last 7 Days)</h3>
-        {chartData.length === 0 ? (
-          <p>No stock movement in the last 7 days.</p>
-        ) : (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', height: '150px', marginTop: '12px' }}>
-            {chartData.map((row, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    width: '40px',
-                    height: `${Math.min(Number(row.total), 150)}px`,
-                    backgroundColor: row.movement_type === 'in' ? '#5cb85c' : '#d9534f',
-                    borderRadius: '4px 4px 0 0',
-                  }}
-                  title={`${row.movement_type}: ${row.total}`}
-                />
-                <div style={{ fontSize: '0.75em', marginTop: '4px' }}>
-                  {row.movement_type} ({row.total})
-                </div>
+      <section className="stats-grid">
+        {statCards.map((card) => {
+          const content = (
+            <div className={`stat-card ${card.tone}`}>
+              <div className="stat-copy">
+                <span className="stat-label">{card.label}</span>
+                <strong className="stat-value">{card.value}</strong>
+                <span className="stat-detail">{card.detail}</span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <span className="stat-icon"><Icon name={card.icon} size={21} /></span>
+            </div>
+          )
+          return card.link ? <Link key={card.label} to={card.link} className="stat-link">{content}</Link> : <div key={card.label}>{content}</div>
+        })}
+      </section>
 
-      <div style={{ marginTop: '24px' }}>
-        <h3>Recent Transactions</h3>
-        {movements.length === 0 ? (
-          <p>No recent transactions.</p>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-                <th style={{ padding: '8px' }}>Product</th>
-                <th style={{ padding: '8px' }}>Type</th>
-                <th style={{ padding: '8px' }}>Quantity</th>
-                <th style={{ padding: '8px' }}>Notes</th>
-                <th style={{ padding: '8px' }}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map((m) => (
-                <tr key={m.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '8px' }}>{m.product_name}</td>
-                  <td style={{ padding: '8px', color: m.movement_type === 'in' ? '#5cb85c' : '#d9534f' }}>
-                    {m.movement_type === 'in' ? 'Stock In' : 'Stock Out'}
-                  </td>
-                  <td style={{ padding: '8px' }}>{m.quantity}</td>
-                  <td style={{ padding: '8px' }}>{m.notes || '—'}</td>
-                  <td style={{ padding: '8px' }}>{new Date(m.created_at).toLocaleString()}</td>
-                </tr>
+      <section className="dashboard-main-grid">
+        <div className="glass-panel chart-panel">
+          <div className="panel-heading">
+            <div><h3>Stock Movement</h3><p>Activity over the last {DATE_RANGE_PRESETS.find((p) => p.value === chartDays)?.label.toLowerCase()}</p></div>
+          </div>
+          <DateRangePicker value={chartDays} onChange={handleChartRangeChange} />
+          <div style={{ marginTop: '14px' }}>
+          {chartLoading ? (
+            <div className="empty-chart">Loading chart...</div>
+          ) : chartBars.length === 0 ? (
+            <div className="empty-chart">No stock movement in this period.</div>
+          ) : (
+            <div className="bar-chart" aria-label="Stock movement chart">
+              <div className="chart-grid-lines"><span /><span /><span /><span /></div>
+              {chartBars.map((row, i) => (
+                <div className="bar-column" key={`${row.movement_type}-${i}`}>
+                  <div className={`bar ${row.movement_type === 'in' ? 'in' : 'out'}`} style={{ height: `${row.height}px` }} title={`${row.movement_type}: ${row.total}`}>
+                    <AdinkraWatermark name={row.symbol} className="bar-watermark" />
+                  </div>
+                  <span>{row.movement_type === 'in' ? 'In' : 'Out'}</span>
+                  <small>{row.total}</small>
+                </div>
               ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            </div>
+          )}
+          </div>
+          <div className="chart-legend"><span><i className="legend-dot in" />Stock In</span><span><i className="legend-dot out" />Stock Out</span></div>
+        </div>
+
+        <div className="glass-panel low-stock-panel">
+          <div className="panel-heading">
+            <div><h3>Low Stock</h3><p>Products that need attention</p></div>
+            <Link to="/low-stock" className="view-link">View all</Link>
+          </div>
+          <div className="stock-list">
+            {lowStockProducts.length === 0 ? (
+              <div className="mini-empty"><span>✓</span><p>Everything looks healthy.</p></div>
+            ) : (
+              lowStockProducts.slice(0, 5).map((product) => (
+                <div className="stock-list-item" key={product.id}>
+                  <span className="product-status-dot" aria-hidden="true" />
+                  <div className="product-info"><strong>{capitalizeWords(product.name)}</strong>{product.sku && <small>{product.sku}</small>}</div>
+                  <span className="stock-count">{product.quantity} left</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {userIsAdmin && (fastestMoving.length > 0 || slowestMoving.length > 0) && (
+        <Link to="/reports?tab=activity" className="glass-panel dashboard-velocity-panel dashboard-velocity-card">
+          <div className="panel-heading">
+            <div><h3>Product Movement</h3><p>Fastest &amp; slowest sellers (Stock Out)</p></div>
+            <Icon name="chevron" size={16} className="dashboard-velocity-arrow" />
+          </div>
+          <div className="dashboard-velocity-summary">
+            {fastestMoving[0] && (
+              <div className="dashboard-velocity-row">
+                <span className="dashboard-velocity-tag fast">Fastest</span>
+                <strong>{capitalizeWords(fastestMoving[0].name)}</strong>
+                <span className="dashboard-velocity-count">{fastestMoving[0].totalOut} sold</span>
+              </div>
+            )}
+            {slowestMoving[0] && (
+              <div className="dashboard-velocity-row">
+                <span className="dashboard-velocity-tag slow">Slowest</span>
+                <strong>{capitalizeWords(slowestMoving[0].name)}</strong>
+                <span className="dashboard-velocity-count">{slowestMoving[0].totalOut} sold</span>
+              </div>
+            )}
+          </div>
+        </Link>
+      )}
+
+      <section className="dashboard-bottom-grid">
+        <div className="glass-panel transactions-panel">
+          <div className="panel-heading">
+            <div><h3>Recent Transactions</h3><p>The latest inventory activity</p></div>
+            <Link to="/history" className="view-link">View history</Link>
+          </div>
+          {movements.length === 0 ? (
+            <div className="table-empty">No recent transactions.</div>
+          ) : (
+            <div className="transaction-table-wrap">
+              <table className="transaction-table">
+                <thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Date</th></tr></thead>
+                <tbody>
+                  {movements.slice(0, 6).map((m) => (
+                    <tr key={m.id}>
+                      <td><strong>{m.product_name}</strong></td>
+                      <td><span className={`movement-badge ${m.movement_type === 'in' ? 'stock-in' : 'stock-out'}`}>{m.movement_type === 'in' ? 'Stock In' : 'Stock Out'}</span></td>
+                      <td className={`quantity ${m.movement_type === 'in' ? 'positive' : 'negative'}`}>{m.movement_type === 'in' ? '+' : '-'}{m.quantity}</td>
+                      <td className="date-cell">{new Date(m.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

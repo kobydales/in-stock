@@ -14,6 +14,11 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ProtectedRoute from './components/ProtectedRoute'
 import History from './pages/History'
+import Platform from './pages/Platform'
+import PlatformBusinessDetail from './pages/PlatformBusinessDetail'
+import Team from './pages/Team'
+import AdminRoute from './components/AdminRoute'
+import PlatformRoute from './components/PlatformRoute'
 
 function App() {
   return (
@@ -36,8 +41,11 @@ function App() {
                   <Route path="/stock-in" element={<StockIn />} />
                   <Route path="/stock-out" element={<StockOut />} />
                   <Route path="/low-stock" element={<LowStock />} />
-                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+                  <Route path="/team" element={<AdminRoute><Team /></AdminRoute>} />
                   <Route path="/history" element={<History />} />
+                  <Route path="/platform" element={<PlatformRoute><Platform /></PlatformRoute>} />
+                  <Route path="/platform/businesses/:id" element={<PlatformRoute><PlatformBusinessDetail /></PlatformRoute>} />
                 </Routes>
               </MainLayout>
             </ProtectedRoute>

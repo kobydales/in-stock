@@ -1,16 +1,18 @@
 import { useState } from 'react'
+import CustomSelect from './CustomSelect'
+import { capitalizeWords } from '../utils/textFormat'
 
 function CategoryForm({ onSubmit, onCancel, initialData }) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
+    name: initialData?.name ? capitalizeWords(initialData.name) : '',
+    description: initialData?.description ? capitalizeWords(initialData.description) : '',
     status: initialData?.status || 'active',
   })
   const [errors, setErrors] = useState({})
 
   function handleChange(e) {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({ ...prev, [name]: ['name', 'description'].includes(name) ? capitalizeWords(value) : value }))
   }
 
   function validate() {
@@ -44,10 +46,15 @@ function CategoryForm({ onSubmit, onCancel, initialData }) {
 
       <div>
         <label>Status</label>
-        <select name="status" value={formData.status} onChange={handleChange}>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <CustomSelect
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          options={[
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+          ]}
+        />
       </div>
 
       <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>

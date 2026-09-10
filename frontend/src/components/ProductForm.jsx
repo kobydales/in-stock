@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { fetchCategories, fetchSuppliers, createCategory, createSupplier } from '../services/api'
+import CustomSelect from './CustomSelect'
+import { capitalizeWords } from '../utils/textFormat'
 
 function ProductForm({ onSubmit, onCancel, initialData }) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
+    name: initialData?.name ? capitalizeWords(initialData.name) : '',
     sku: initialData?.sku || '',
     category_id: initialData?.category_id || '',
     supplier_id: initialData?.supplier_id || '',
@@ -11,7 +13,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
     cost_price: initialData?.cost_price || '',
     quantity: initialData?.quantity || '',
     minimum_stock: initialData?.minimum_stock || '',
-    description: initialData?.description || '',
+    description: initialData?.description ? capitalizeWords(initialData.description) : '',
     status: initialData?.status || 'active',
   })
 
@@ -43,7 +45,9 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
   function handleChange(e) {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const shouldFormat = ['name', 'description'].includes(name)
+    const nextValue = shouldFormat ? capitalizeWords(value) : value
+    setFormData((prev) => ({ ...prev, [name]: nextValue }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
     }
@@ -86,7 +90,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
     if (creatingCategory) {
       try {
-        const newCategory = await createCategory({ name: newCategoryName.trim(), status: 'active' })
+        const newCategory = await createCategory({ name: capitalizeWords(newCategoryName.trim()), status: 'active' })
         categoryId = newCategory.id
         setCategories((prev) => [...prev, newCategory])
       } catch (err) {
@@ -100,7 +104,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
     if (creatingSupplier) {
       try {
-        const newSupplier = await createSupplier({ name: newSupplierName.trim() })
+        const newSupplier = await createSupplier({ name: capitalizeWords(newSupplierName.trim()) })
         supplierId = newSupplier.id
         setSuppliers((prev) => [...prev, newSupplier])
       } catch (err) {
@@ -147,9 +151,10 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
       <div>
         <label>Category</label>
-        <select
+        <CustomSelect
           name="category_id"
           value={creatingCategory ? '__new__' : formData.category_id}
+          placeholder="No category"
           onChange={(e) => {
             const value = e.target.value
             if (value === '__new__') {
@@ -161,13 +166,12 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
               setFormData((prev) => ({ ...prev, category_id: value }))
             }
           }}
-        >
-          <option value="">-- No category --</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-          <option value="__new__">+ Add new category...</option>
-        </select>
+          options={[
+            { value: '', label: 'No category' },
+            ...categories.map((cat) => ({ value: cat.id, label: capitalizeWords(cat.name) })),
+            { value: '__new__', label: 'Add new category' },
+          ]}
+        />
 
         {creatingCategory && (
           <div style={{ marginTop: '6px', display: 'flex', gap: '6px' }}>
@@ -175,7 +179,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
               type="text"
               placeholder="New category name"
               value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+              onChange={(e) => setNewCategoryName(capitalizeWords(e.target.value))}
             />
             <button type="button" onClick={() => { setCreatingCategory(false); setNewCategoryName('') }}>
               Cancel
@@ -187,9 +191,10 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
       <div>
         <label>Supplier</label>
-        <select
+        <CustomSelect
           name="supplier_id"
           value={creatingSupplier ? '__new__' : formData.supplier_id}
+          placeholder="No supplier"
           onChange={(e) => {
             const value = e.target.value
             if (value === '__new__') {
@@ -201,13 +206,12 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
               setFormData((prev) => ({ ...prev, supplier_id: value }))
             }
           }}
-        >
-          <option value="">-- No supplier --</option>
-          {suppliers.map((sup) => (
-            <option key={sup.id} value={sup.id}>{sup.name}</option>
-          ))}
-          <option value="__new__">+ Add new supplier...</option>
-        </select>
+          options={[
+            { value: '', label: 'No supplier' },
+            ...suppliers.map((sup) => ({ value: sup.id, label: capitalizeWords(sup.name) })),
+            { value: '__new__', label: 'Add new supplier' },
+          ]}
+        />
 
         {creatingSupplier && (
           <div style={{ marginTop: '6px', display: 'flex', gap: '6px' }}>
@@ -215,7 +219,7 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
               type="text"
               placeholder="New supplier name"
               value={newSupplierName}
-              onChange={(e) => setNewSupplierName(e.target.value)}
+              onChange={(e) => setNewSupplierName(capitalizeWords(e.target.value))}
             />
             <button type="button" onClick={() => { setCreatingSupplier(false); setNewSupplierName('') }}>
               Cancel
@@ -256,10 +260,15 @@ function ProductForm({ onSubmit, onCancel, initialData }) {
 
       <div>
         <label>Status</label>
-        <select name="status" value={formData.status} onChange={handleChange}>
-          <option value="active">Active</option>
-          <option value="discontinued">Discontinued</option>
-        </select>
+        <CustomSelect
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          options={[
+            { value: 'active', label: 'Active' },
+            { value: 'discontinued', label: 'Discontinued' },
+          ]}
+        />
       </div>
 
       {errors.submit && <p style={{ color: 'red', fontSize: '0.85em' }}>{errors.submit}</p>}

@@ -2,10 +2,11 @@ const pool = require('../db')
 
 async function getAllProducts(businessId) {
   const result = await pool.query(`
-    SELECT products.*, categories.name AS category_name, suppliers.name AS supplier_name
+    SELECT products.*, categories.name AS category_name, suppliers.name AS supplier_name, users.name AS created_by_name
     FROM products
     LEFT JOIN categories ON products.category_id = categories.id
     LEFT JOIN suppliers ON products.supplier_id = suppliers.id
+    LEFT JOIN users ON products.created_by = users.id
     WHERE products.business_id = $1
     ORDER BY products.id
   `, [businessId])
@@ -20,20 +21,35 @@ async function getProductById(id, businessId) {
   return result.rows[0]
 }
 
-async function createProduct(product, businessId) {
+async function createProduct(product, businessId, createdBy) {
   const { name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status } = product
+  const normalizedSku = sku && String(sku).trim() ? String(sku).trim() : null
 
   const result = await pool.query(
-    `INSERT INTO products (name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status, business_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `INSERT INTO products (name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status, business_id, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
-    [name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status, businessId]
+    [
+      name,
+      normalizedSku,
+      category_id || null,
+      supplier_id || null,
+      selling_price ?? 0,
+      cost_price ?? 0,
+      quantity ?? 0,
+      minimum_stock ?? 0,
+      description || null,
+      status || 'active',
+      businessId,
+      createdBy,
+    ]
   )
   return result.rows[0]
 }
 
 async function updateProduct(id, product, businessId) {
   const { name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status } = product
+  const normalizedSku = sku && String(sku).trim() ? String(sku).trim() : null
 
   const result = await pool.query(
     `UPDATE products
@@ -42,7 +58,20 @@ async function updateProduct(id, product, businessId) {
          updated_at = NOW()
      WHERE id = $11 AND business_id = $12
      RETURNING *`,
-    [name, sku, category_id, supplier_id, selling_price, cost_price, quantity, minimum_stock, description, status, id, businessId]
+    [
+      name,
+      normalizedSku,
+      category_id || null,
+      supplier_id || null,
+      selling_price ?? 0,
+      cost_price ?? 0,
+      quantity ?? 0,
+      minimum_stock ?? 0,
+      description || null,
+      status || 'active',
+      id,
+      businessId,
+    ]
   )
   return result.rows[0]
 }

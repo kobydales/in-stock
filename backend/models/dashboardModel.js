@@ -8,7 +8,7 @@ async function getStats(businessId) {
     'SELECT COALESCE(SUM(quantity), 0) AS total FROM products WHERE business_id = $1', [businessId]
   )
   const lowStockResult = await pool.query(
-    'SELECT COUNT(*) FROM products WHERE quantity > 0 AND quantity <= minimum_stock AND business_id = $1',
+    'SELECT COUNT(*) FROM products WHERE quantity <= minimum_stock AND business_id = $1',
     [businessId]
   )
   const outOfStockResult = await pool.query(
@@ -44,17 +44,18 @@ async function getRecentProducts(businessId, limit = 5) {
   return result.rows
 }
 
-async function getMovementChartData(businessId) {
+async function getMovementChartData(businessId, days = 7) {
+  const safeDays = Math.min(Math.max(Number(days) || 7, 1), 365)
   const result = await pool.query(
     `SELECT
       DATE(created_at) AS date,
       movement_type,
       SUM(quantity) AS total
     FROM stock_movements
-    WHERE created_at >= NOW() - INTERVAL '7 days' AND business_id = $1
+    WHERE created_at >= NOW() - ($2 * INTERVAL '1 day') AND business_id = $1
     GROUP BY DATE(created_at), movement_type
     ORDER BY date`,
-    [businessId]
+    [businessId, safeDays]
   )
   return result.rows
 }

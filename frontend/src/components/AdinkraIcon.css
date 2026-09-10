@@ -1,0 +1,15 @@
+.adinkra-icon {
+  display:inline-block;
+  width:20px;
+  height:20px;
+  flex:0 0 auto;
+  background:currentColor;
+  -webkit-mask-image:var(--adinkra-image);
+  mask-image:var(--adinkra-image);
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  mask-position:center;
+  -webkit-mask-size:contain;
+  mask-size:contain;
+}

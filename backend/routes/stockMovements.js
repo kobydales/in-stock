@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const stockMovementModel = require('../models/stockMovementModel')
 const { requireAuth } = require('../middleware/auth')
+const { sendServerError } = require('../utils/errors')
 
 router.post('/in', requireAuth, async (req, res) => {
   try {
@@ -22,7 +23,7 @@ router.post('/in', requireAuth, async (req, res) => {
     if (err.message === 'Product not found') {
       return res.status(404).json({ error: 'Product not found' })
     }
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -48,7 +49,7 @@ router.post('/out', requireAuth, async (req, res) => {
     if (err.message === 'INSUFFICIENT_STOCK') {
       return res.status(409).json({ error: 'Not enough stock available for this quantity' })
     }
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -57,7 +58,7 @@ router.get('/product/:productId', requireAuth, async (req, res) => {
     const movements = await stockMovementModel.getMovementsByProduct(req.params.productId, req.user.businessId)
     res.json(movements)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -66,7 +67,7 @@ router.get('/', requireAuth, async (req, res) => {
     const movements = await stockMovementModel.getAllMovements(req.user.businessId)
     res.json(movements)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 

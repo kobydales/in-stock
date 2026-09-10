@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { fetchNotifications, fetchUnreadCount, markNotificationRead, markAllNotificationsRead } from '../services/api'
+import Icon from './Icon'
+import './NotificationBell.css'
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([])
@@ -19,18 +21,14 @@ function NotificationBell() {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false)
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   function toggleOpen() {
-    if (!open) {
-      fetchNotifications().then(setNotifications).catch(() => {})
-    }
+    if (!open) fetchNotifications().then(setNotifications).catch(() => {})
     setOpen((prev) => !prev)
   }
 
@@ -47,71 +45,26 @@ function NotificationBell() {
   }
 
   return (
-    <div style={{ position: 'relative' }} ref={dropdownRef}>
-      <button onClick={toggleOpen} style={{ position: 'relative', cursor: 'pointer' }}>
-        🔔
-        {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '-6px',
-              right: '-6px',
-              backgroundColor: '#d9534f',
-              color: 'white',
-              borderRadius: '50%',
-              fontSize: '0.7em',
-              padding: '2px 6px',
-            }}
-          >
-            {unreadCount}
-          </span>
-        )}
+    <div className="notification-wrap" ref={dropdownRef}>
+      <button className="notification-button" onClick={toggleOpen} aria-label="Notifications">
+        <Icon name="bell" size={18} />
+        {unreadCount > 0 && <span className="notification-count">{unreadCount > 9 ? '9+' : unreadCount}</span>}
       </button>
 
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: '100%',
-            marginTop: '8px',
-            width: '300px',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            backgroundColor: 'white',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            zIndex: 100,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #eee' }}>
-            <strong>Notifications</strong>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} style={{ fontSize: '0.8em' }}>
-                Mark all read
-              </button>
-            )}
+        <div className="notification-dropdown">
+          <div className="notification-header">
+            <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : 'All caught up'}</span></div>
+            {unreadCount > 0 && <button onClick={handleMarkAllRead}>Mark all read</button>}
           </div>
 
           {notifications.length === 0 ? (
-            <p style={{ padding: '16px', textAlign: 'center', color: '#666' }}>No notifications yet.</p>
+            <div className="notification-empty"><Icon name="bell" size={21} /><p>No notifications yet.</p></div>
           ) : (
             notifications.map((n) => (
-              <div
-                key={n.id}
-                onClick={() => !n.is_read && handleMarkRead(n.id)}
-                style={{
-                  padding: '10px',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: n.is_read ? 'white' : '#fff8e1',
-                  cursor: n.is_read ? 'default' : 'pointer',
-                }}
-              >
-                <div style={{ fontSize: '0.9em' }}>{n.message}</div>
-                <div style={{ fontSize: '0.75em', color: '#999', marginTop: '4px' }}>
-                  {new Date(n.created_at).toLocaleString()}
-                </div>
+              <div key={n.id} onClick={() => !n.is_read && handleMarkRead(n.id)} className={`notification-item ${n.is_read ? 'read' : 'unread'}`}>
+                <span className="notification-dot" />
+                <div><div className="notification-message">{n.message}</div><div className="notification-date">{new Date(n.created_at).toLocaleString()}</div></div>
               </div>
             ))
           )}

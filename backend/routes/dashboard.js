@@ -2,13 +2,14 @@ const express = require('express')
 const router = express.Router()
 const dashboardModel = require('../models/dashboardModel')
 const { requireAuth } = require('../middleware/auth')
+const { sendServerError } = require('../utils/errors')
 
 router.get('/stats', requireAuth, async (req, res) => {
   try {
     const stats = await dashboardModel.getStats(req.user.businessId)
     res.json(stats)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -17,7 +18,7 @@ router.get('/recent-movements', requireAuth, async (req, res) => {
     const movements = await dashboardModel.getRecentMovements(req.user.businessId)
     res.json(movements)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -26,16 +27,16 @@ router.get('/recent-products', requireAuth, async (req, res) => {
     const products = await dashboardModel.getRecentProducts(req.user.businessId)
     res.json(products)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
 router.get('/movement-chart', requireAuth, async (req, res) => {
   try {
-    const data = await dashboardModel.getMovementChartData(req.user.businessId)
+    const data = await dashboardModel.getMovementChartData(req.user.businessId, req.query.days)
     res.json(data)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 
@@ -44,7 +45,7 @@ router.get('/category-chart', requireAuth, async (req, res) => {
     const data = await dashboardModel.getCategoryChartData(req.user.businessId)
     res.json(data)
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    sendServerError(res, err)
   }
 })
 

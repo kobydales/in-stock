@@ -1,4 +1,7 @@
-const API_URL = 'http://localhost:5050'
+// In dev, defaults to localhost. To test from a phone/another device on
+// the same network, set VITE_API_URL in a .env.local file (see
+// .env.local.example) to your computer's LAN IP instead of editing this.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
 
 function authHeaders() {
   const token = localStorage.getItem('token')
@@ -8,14 +11,6 @@ function authHeaders() {
 export function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
-}
-
-export async function fetchTestData() {
-  const response = await fetch(`${API_URL}/api/test`)
-  if (!response.ok) {
-    throw new Error('Failed to fetch data')
-  }
-  return response.json()
 }
 
 export async function signup(data) {
@@ -61,7 +56,8 @@ export async function createProduct(product) {
     body: JSON.stringify(product),
   })
   if (!response.ok) {
-    throw new Error('Failed to create product')
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to create product')
   }
   return response.json()
 }
@@ -73,7 +69,8 @@ export async function updateProduct(id, product) {
     body: JSON.stringify(product),
   })
   if (!response.ok) {
-    throw new Error('Failed to update product')
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to update product')
   }
   return response.json()
 }
@@ -84,7 +81,8 @@ export async function deleteProduct(id) {
     headers: { ...authHeaders() },
   })
   if (!response.ok) {
-    throw new Error('Failed to delete product')
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to delete product')
   }
   return response.json()
 }
@@ -231,8 +229,8 @@ export async function fetchRecentMovements() {
   return response.json()
 }
 
-export async function fetchMovementChart() {
-  const response = await fetch(`${API_URL}/api/dashboard/movement-chart`, {
+export async function fetchMovementChart(days = 7) {
+  const response = await fetch(`${API_URL}/api/dashboard/movement-chart?days=${days}`, {
     headers: { ...authHeaders() },
   })
   if (!response.ok) throw new Error('Failed to fetch chart data')
@@ -272,6 +270,17 @@ export async function fetchMostMovedReport() {
   return response.json()
 }
 
+export async function fetchProductVelocity(order = 'most', limit = 5) {
+  const response = await fetch(`${API_URL}/api/reports/product-velocity?order=${order}&limit=${limit}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to fetch product velocity')
+  }
+  return response.json()
+}
+
 export async function fetchStockMovementReport(startDate, endDate) {
   const params = new URLSearchParams()
   if (startDate) params.set('startDate', startDate)
@@ -280,6 +289,51 @@ export async function fetchStockMovementReport(startDate, endDate) {
     headers: { ...authHeaders() },
   })
   if (!response.ok) throw new Error('Failed to fetch stock movement report')
+  return response.json()
+}
+
+export async function fetchValuationReport() {
+  const response = await fetch(`${API_URL}/api/reports/valuation`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch valuation report')
+  return response.json()
+}
+
+// Admin-only staff/team management.
+export async function fetchUsers() {
+  const response = await fetch(`${API_URL}/api/users`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to fetch users')
+  }
+  return response.json()
+}
+
+export async function createStaffUser(data) {
+  const response = await fetch(`${API_URL}/api/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to create user')
+  }
+  return response.json()
+}
+
+export async function deleteUser(id) {
+  const response = await fetch(`${API_URL}/api/users/${id}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to remove user')
+  }
   return response.json()
 }
 
@@ -314,5 +368,32 @@ export async function markAllNotificationsRead() {
     headers: { ...authHeaders() },
   })
   if (!response.ok) throw new Error('Failed to mark all as read')
+  return response.json()
+}
+
+// Platform-owner-only endpoints. The backend enforces access via the
+// platformOwner flag baked into the JWT — these calls will 403 for anyone
+// else, so the UI hiding them is a convenience, not the security boundary.
+export async function fetchPlatformOverview() {
+  const response = await fetch(`${API_URL}/api/platform/overview`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch platform overview')
+  return response.json()
+}
+
+export async function fetchPlatformBusinesses() {
+  const response = await fetch(`${API_URL}/api/platform/businesses`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch businesses')
+  return response.json()
+}
+
+export async function fetchPlatformBusinessDetail(id) {
+  const response = await fetch(`${API_URL}/api/platform/businesses/${id}`, {
+    headers: { ...authHeaders() },
+  })
+  if (!response.ok) throw new Error('Failed to fetch business detail')
   return response.json()
 }

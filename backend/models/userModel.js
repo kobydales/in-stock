@@ -33,11 +33,78 @@ async function createBusinessWithAdmin({ businessName, name, email, password }) 
 }
 
 async function findUserByEmail(email) {
-  const result = await pool.query('SELECT * FROM users WHERE email = $1', [email])
+  const result = await pool.query(
+    `SELECT users.*, businesses.name AS business_name
+     FROM users
+     JOIN businesses ON businesses.id = users.business_id
+     WHERE users.email = $1`,
+    [email]
+  )
+  return result.rows[0]
+}
+
+async function createStaffUser({ businessId, name, email, password, role }) {
+  const passwordHash = await bcrypt.hash(password, 10)
+  const result = await pool.query(
+    `INSERT INTO users (business_id, name, email, password_hash, role)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, business_id, name, email, role, created_at`,
+    [businessId, name, email, passwordHash, role]
+  )
+  return result.rows[0]
+}
+
+async function getUsersByBusiness(businessId) {
+  const result = await pool.query(
+    `SELECT
+      users.id, users.name, users.email, users.role, users.created_at,
+      COUNT(DISTINCT products.id) AS products_added,
+      COUNT(DISTINCT stock_movements.id) AS stock_movements_recorded
+     FROM users
+     LEFT JOIN products ON products.created_by = users.id
+     LEFT JOIN stock_movements ON stock_movements.user_id = users.id
+     WHERE users.business_id = $1
+     GROUP BY users.id
+     ORDER BY users.created_at`,
+    [businessId]
+  )
+  return result.rows.map((row) => ({
+    ...row,
+    products_added: Number(row.products_added),
+    stock_movements_recorded: Number(row.stock_movements_recorded),
+  }))
+}
+
+async function getUserById(id, businessId) {
+  const result = await pool.query(
+    'SELECT id, name, email, role, created_at FROM users WHERE id = $1 AND business_id = $2',
+    [id, businessId]
+  )
+  return result.rows[0]
+}
+
+async function countAdmins(businessId) {
+  const result = await pool.query(
+    "SELECT COUNT(*) FROM users WHERE business_id = $1 AND role = 'admin'",
+    [businessId]
+  )
+  return Number(result.rows[0].count)
+}
+
+async function deleteUser(id, businessId) {
+  const result = await pool.query(
+    'DELETE FROM users WHERE id = $1 AND business_id = $2 RETURNING id, name, email, role',
+    [id, businessId]
+  )
   return result.rows[0]
 }
 
 module.exports = {
   createBusinessWithAdmin,
   findUserByEmail,
+  createStaffUser,
+  getUsersByBusiness,
+  getUserById,
+  countAdmins,
+  deleteUser,
 }

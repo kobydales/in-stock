@@ -1,102 +1,267 @@
 .app-shell {
-  display: flex;
   min-height: 100vh;
+  display: flex;
+  background: #f5f4ef;
 }
 
 .sidebar {
-  width: 220px;
-  background-color: #1a1a1a;
-  color: #fff;
-  padding: 20px;
+  width: 252px;
+  height: 100vh;
+  padding: 25px 16px 18px;
+  background: #273923;
+  color: #f7f5ed;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  box-shadow: 10px 0 35px rgba(34, 48, 31, 0.08);
 }
 
-.app-name {
-  margin-bottom: 30px;
-  font-size: 1.3rem;
+.sidebar-pattern {
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  right: -155px;
+  top: 210px;
+  object-fit: contain;
+  opacity: .055;
+  filter: brightness(0) invert(1);
+  transform: rotate(-8deg);
+  pointer-events: none;
 }
+
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 9px 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.brand-logo { width: 142px; height: auto; max-height: 82px; object-fit: contain; object-position: left center; display:block; }
+
+.sidebar-close { display: none; }
+
+.nav-section-label {
+  padding: 0 12px 8px;
+  color: rgba(247, 245, 237, 0.42);
+  text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.inventory-label { margin-top: 22px; }
 
 .nav-links {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 3px;
+  position: relative;
+  z-index: 1;
 }
 
-.nav-links a {
-  color: #ccc;
-  text-decoration: none;
-  padding: 8px 10px;
-  border-radius: 6px;
-}
-
-.nav-links a:hover {
-  background-color: #2a2a2a;
-  color: #fff;
-}
-
-.main-area {
-  flex: 1;
+.nav-item {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  min-height: 43px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: rgba(247, 245, 237, 0.68);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 160ms ease;
 }
 
-.header {
-  padding: 20px;
-  border-bottom: 1px solid #ddd;
-  background-color: #fff;
+.nav-item svg { opacity: 0.82; }
+.nav-item:hover { background: rgba(255,255,255,0.065); color: #fff; }
+.nav-item.active {
+  color: #25331f;
+  background: #e4d39e;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+.nav-item.active svg { color: #344b2d; }
+.nav-dot {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #d5b36a;
 }
 
-.content {
-  padding: 20px;
-  flex: 1;
+.sidebar-spacer { flex: 1; min-height: 24px; }
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.055);
+  position: relative;
+  z-index: 1;
 }
 
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #d5b36a;
+  color: #273923;
+  font-weight: 800;
+  font-size: 13px;
+}
+.avatar.small { width: 35px; height: 35px; font-size: 12px; }
+
+.user-details, .header-user-text { min-width: 0; display: flex; flex-direction: column; }
+.user-details strong, .header-user-text strong { font-size: 12px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-details span, .header-user-text span { font-size: 10px; opacity: 0.52; margin-top: 2px; }
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 9px;
+  padding: 10px 12px;
+  color: rgba(247,245,237,0.55);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
-  padding: 4px 8px;
+  border-radius: 10px;
+  text-align: left;
 }
+.logout-button:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.sidebar-footer { color: rgba(247,245,237,0.42); font-size: 9px; line-height: 1.45; padding: 10px 12px 0; position: relative; z-index: 1; display:flex; gap:7px; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-.sidebar-overlay {
-  display: none;
+.main-area { min-width: 0; flex: 1; display: flex; flex-direction: column; margin-left: 252px; }
+.header {
+  min-height: 82px;
+  padding: 15px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: rgba(250,249,245,0.86);
+  border-bottom: 1px solid rgba(40, 50, 39, 0.07);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.breadcrumb { color: #8b8d84; font-size: 10px; margin-bottom: 3px; }
+.breadcrumb span { padding: 0 5px; opacity: 0.5; }
+.header h1 { font-size: 21px; line-height: 1.1; letter-spacing: -0.4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.header-user {
+  height: 44px;
+  padding: 4px 9px 4px 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(40,50,39,0.08);
+  background: rgba(255,255,255,0.62);
+  border-radius: 14px;
+}
+.header-user > svg { color: #969990; }
+.menu-toggle { display: none; }
+.content { flex: 1; width: 100%; min-width: 0; padding: 28px 32px 40px; overflow: visible; }
+
+.sidebar-overlay { display: none; }
+
+@media (max-width: 1050px) {
+  .sidebar { width: 224px; }
+  .main-area { margin-left: 224px; }
 }
 
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0 auto 0 0;
     height: 100vh;
-    z-index: 200;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
+    transform: translateX(-105%);
+    /* visibility is delayed on close (not open) so the sidebar is fully
+       hidden from hit-testing/rendering while off-canvas — this stops
+       iOS Safari's edge-swipe-back gesture from briefly revealing it as
+       a "flash" during the page-slide animation, since there's nothing
+       there for the gesture to expose. */
+    visibility: hidden;
+    transition: transform 220ms ease, visibility 0s linear 220ms;
+    width: 270px;
   }
-
   .sidebar.open {
-    transform: translateX(0);
+    visibility: visible;
+    transition: transform 220ms ease, visibility 0s linear 0s;
   }
-
-  .menu-toggle {
-    display: block;
-  }
-
-  .sidebar-overlay.open {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 150;
-  }
-
-  .content {
-    padding: 16px;
-  }
-
-  .header {
-    padding: 16px;
-  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-close { display: grid; place-items: center; margin-left: auto; width: 34px; height: 34px; border: 0; border-radius: 9px; background: rgba(255,255,255,0.07); color: #fff; }
+  .sidebar-overlay.open { display: block; position: fixed; inset: 0; background: rgba(19,25,18,0.42); backdrop-filter: blur(3px); z-index: 150; }
+  .header { min-height: 72px; padding: 12px 16px; }
+  .header h1 { font-size: 17px; }
+  .menu-toggle { display: grid; place-items: center; width: 37px; height: 37px; border: 1px solid rgba(40,50,39,0.08); background: #fff; border-radius: 11px; color: #364332; }
+  .header-user-text, .header-user > svg { display: none; }
+  .header-user { width: 43px; justify-content: center; padding: 4px; }
+  .content { padding: 18px 15px 30px; }
+  .main-area { margin-left: 0; }
 }
+
+
+@media (max-width: 600px) {
+  .main-area { min-width: 0; width: 100%; }
+  .content { padding: 20px 14px 30px; }
+}
+
+.brand-mark img { width: 25px; height: 25px; object-fit: contain; filter: brightness(0) invert(1); opacity: .88; }
+.sidebar-footer { display:flex; align-items:center; gap:8px; padding-top:12px; color:rgba(247,245,237,.42); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+@media (max-width: 700px) { .brand-logo { width: 136px; max-height:76px; } }
+
+.sidebar-business-symbol { width:14px; height:14px; color:#d5b36a; opacity:.75; flex-shrink:0; }
+
+.sidebar-install-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px solid rgba(213,179,106,.28);
+  border-radius: 10px;
+  background: rgba(213,179,106,.1);
+  color: #f7f5ed;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.sidebar-install-button:hover { background: rgba(213,179,106,.2); }
+
+.sidebar-install-hint {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px dashed rgba(213,179,106,.28);
+  border-radius: 10px;
+  color: rgba(247,245,237,.65);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.sidebar-install-hint strong { color: #d5b36a; }

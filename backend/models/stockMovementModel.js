@@ -18,8 +18,8 @@ async function stockIn(productId, quantity, notes, businessId, userId) {
     const newQuantity = product.quantity + quantity
 
     await client.query(
-      'UPDATE products SET quantity = $1, updated_at = NOW() WHERE id = $2',
-      [newQuantity, productId]
+      'UPDATE products SET quantity = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3',
+      [newQuantity, productId, businessId]
     )
 
     const movementResult = await client.query(
@@ -60,8 +60,8 @@ async function stockOut(productId, quantity, notes, businessId, userId) {
     const newQuantity = product.quantity - quantity
 
     await client.query(
-      'UPDATE products SET quantity = $1, updated_at = NOW() WHERE id = $2',
-      [newQuantity, productId]
+      'UPDATE products SET quantity = $1, updated_at = NOW() WHERE id = $2 AND business_id = $3',
+      [newQuantity, productId, businessId]
     )
 
     const movementResult = await client.query(
@@ -73,14 +73,20 @@ async function stockOut(productId, quantity, notes, businessId, userId) {
 
     await client.query('COMMIT')
 
-    if (newQuantity === 0) {
-      await notificationModel.createNotification(
-        businessId, productId, `${product.name} is now out of stock`
-      )
-    } else if (newQuantity <= product.minimum_stock && product.quantity > product.minimum_stock) {
-      await notificationModel.createNotification(
-        businessId, productId, `${product.name} is now low on stock (${newQuantity} remaining)`
-      )
+    try {
+      if (newQuantity === 0) {
+        await notificationModel.createNotification(
+          businessId, productId, `${product.name} is now out of stock`
+        )
+      } else if (newQuantity <= product.minimum_stock && product.quantity > product.minimum_stock) {
+        await notificationModel.createNotification(
+          businessId, productId, `${product.name} is now low on stock (${newQuantity} remaining)`
+        )
+      }
+    } catch (notificationError) {
+      // Stock movement is already committed. Log notification failure without
+      // incorrectly reporting the movement itself as failed.
+      console.error('Notification creation failed:', notificationError)
     }
 
     return { movement: movementResult.rows[0], newQuantity }

@@ -1,19 +1,20 @@
 import { useState } from 'react'
+import { capitalizeWords } from '../utils/textFormat'
 
 function SupplierForm({ onSubmit, onCancel, initialData }) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    contact_person: initialData?.contact_person || '',
+    name: initialData?.name ? capitalizeWords(initialData.name) : '',
+    contact_person: initialData?.contact_person ? capitalizeWords(initialData.contact_person) : '',
     contact_phone: initialData?.contact_phone || '',
     contact_email: initialData?.contact_email || '',
-    address: initialData?.address || '',
-    notes: initialData?.notes || '',
+    address: initialData?.address ? capitalizeWords(initialData.address) : '',
+    notes: initialData?.notes ? capitalizeWords(initialData.notes) : '',
   })
   const [errors, setErrors] = useState({})
 
   function handleChange(e) {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({ ...prev, [name]: ['name', 'contact_person', 'address', 'notes'].includes(name) ? capitalizeWords(value) : value }))
   }
 
   function validate() {
