@@ -21,8 +21,8 @@
   --shadow: 0 14px 40px rgba(41, 49, 39, 0.06);
 }
 
-html { background: #f5f4ef; overflow-x: hidden; width: 100%; }
-body { min-width: 320px; min-height: 100vh; background: #f5f4ef; color: var(--ink); overflow-x: hidden; width: 100%; touch-action: pan-y; }
+html { background: #f5f4ef; overflow-x: hidden; overflow-y: visible; width: 100%; }
+body { min-width: 320px; min-height: 100vh; background: #f5f4ef; color: var(--ink); overflow-x: hidden; overflow-y: visible; width: 100%; touch-action: pan-y; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }

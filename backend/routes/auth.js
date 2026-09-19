@@ -3,6 +3,10 @@ const router = express.Router()
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const userModel = require('../models/userModel')
+const { validate } = require('../middleware/validate')
+const { sendPasswordResetEmail } = require('../utils/email')
+const { signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } = require('../schemas/authSchemas')
+const { requireAuth } = require('../middleware/auth')
 
 function createToken(user) {
   const isPlatformOwner = Boolean(
@@ -22,22 +26,9 @@ function createToken(user) {
   )
 }
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', validate(signupSchema), async (req, res) => {
   try {
-    const businessName = String(req.body.businessName || '').trim()
-    const name = String(req.body.name || '').trim()
-    const email = String(req.body.email || '').trim().toLowerCase()
-    const password = String(req.body.password || '')
-
-    if (!businessName || !name || !email || !password) {
-      return res.status(400).json({
-        error: 'Business name, name, email and password are required',
-      })
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
-    }
+    const { businessName, name, email, password } = req.body
 
     const existingUser = await userModel.findUserByEmail(email)
     if (existingUser) {
@@ -74,14 +65,9 @@ router.post('/signup', async (req, res) => {
   }
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   try {
-    const email = String(req.body.email || '').trim().toLowerCase()
-    const password = String(req.body.password || '')
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' })
-    }
+    const { email, password } = req.body
 
     const user = await userModel.findUserByEmail(email)
     if (!user) {
@@ -114,6 +100,67 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err)
     res.status(500).json({ error: 'Unable to log in' })
+  }
+})
+
+router.put('/change-password', requireAuth, validate(changePasswordSchema), async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    const user = await userModel.getUserAuthById(req.user.userId)
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const passwordMatches = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!passwordMatches) {
+      return res.status(401).json({ error: 'Current password is incorrect' })
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10)
+    await userModel.updatePassword(user.id, newPasswordHash)
+
+    res.json({ message: 'Password updated successfully' })
+  } catch (err) {
+    console.error('Change password error:', err)
+    res.status(500).json({ error: 'Unable to change password' })
+  }
+})
+
+router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res) => {
+  try {
+    const { email } = req.body
+    const rawToken = await userModel.setResetToken(email)
+
+    // Always respond the same way whether or not the email exists —
+    // otherwise this endpoint becomes a way to check which emails are registered
+    if (rawToken) {
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`
+      await sendPasswordResetEmail({ to: email, resetUrl }).catch((err) => {
+        console.error('Failed to send reset email:', err)
+      })
+    }
+
+    res.json({ message: 'If that email is registered, a reset link has been sent.' })
+  } catch (err) {
+    console.error('Forgot password error:', err)
+    res.status(500).json({ error: 'Unable to process request' })
+  }
+})
+
+router.post('/reset-password', validate(resetPasswordSchema), async (req, res) => {
+  try {
+    const { token, password } = req.body
+    const success = await userModel.resetPasswordWithToken(token, password)
+
+    if (!success) {
+      return res.status(400).json({ error: 'This reset link is invalid or has expired' })
+    }
+
+    res.json({ message: 'Password has been reset. You can now log in.' })
+  } catch (err) {
+    console.error('Reset password error:', err)
+    res.status(500).json({ error: 'Unable to reset password' })
   }
 })
 

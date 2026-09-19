@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { fetchNotifications, fetchUnreadCount, markNotificationRead, markAllNotificationsRead } from '../services/api'
 import Icon from './Icon'
 import './NotificationBell.css'
@@ -48,28 +49,49 @@ function NotificationBell() {
     <div className="notification-wrap" ref={dropdownRef}>
       <button className="notification-button" onClick={toggleOpen} aria-label="Notifications">
         <Icon name="bell" size={18} />
-        {unreadCount > 0 && <span className="notification-count">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        <AnimatePresence>
+          {unreadCount > 0 && (
+            <motion.span
+              key={unreadCount}
+              className="notification-count"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </button>
 
-      {open && (
-        <div className="notification-dropdown">
-          <div className="notification-header">
-            <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : 'All caught up'}</span></div>
-            {unreadCount > 0 && <button onClick={handleMarkAllRead}>Mark all read</button>}
-          </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="notification-dropdown"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            <div className="notification-header">
+              <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : 'All caught up'}</span></div>
+              {unreadCount > 0 && <button onClick={handleMarkAllRead}>Mark all read</button>}
+            </div>
 
-          {notifications.length === 0 ? (
-            <div className="notification-empty"><Icon name="bell" size={21} /><p>No notifications yet.</p></div>
-          ) : (
-            notifications.map((n) => (
-              <div key={n.id} onClick={() => !n.is_read && handleMarkRead(n.id)} className={`notification-item ${n.is_read ? 'read' : 'unread'}`}>
-                <span className="notification-dot" />
-                <div><div className="notification-message">{n.message}</div><div className="notification-date">{new Date(n.created_at).toLocaleString()}</div></div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+            {notifications.length === 0 ? (
+              <div className="notification-empty"><Icon name="bell" size={21} /><p>No notifications yet.</p></div>
+            ) : (
+              notifications.map((n) => (
+                <div key={n.id} onClick={() => !n.is_read && handleMarkRead(n.id)} className={`notification-item ${n.is_read ? 'read' : 'unread'}`}>
+                  <span className="notification-dot" />
+                  <div><div className="notification-message">{n.message}</div><div className="notification-date">{new Date(n.created_at).toLocaleString()}</div></div>
+                </div>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -397,3 +397,43 @@ export async function fetchPlatformBusinessDetail(id) {
   if (!response.ok) throw new Error('Failed to fetch business detail')
   return response.json()
 }
+
+export async function requestPasswordReset(email) {
+  const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to request password reset')
+  }
+  return response.json()
+}
+
+export async function resetPassword(token, password) {
+  const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to reset password')
+  }
+  return response.json()
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const response = await fetch(`${API_URL}/api/auth/change-password`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || 'Failed to change password')
+  }
+  return response.json()
+}
+

@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const categoryModel = require('../models/categoryModel')
 const { requireAuth, requireAdmin } = require('../middleware/auth')
+const { validate } = require('../middleware/validate')
+const { categorySchema } = require('../schemas/categorySchemas')
 const { sendServerError } = require('../utils/errors')
 
 router.get('/', requireAuth, async (req, res) => {
@@ -23,19 +25,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 })
 
-function validateCategoryBody(body) {
-  const name = String(body.name || '').trim()
-  if (!name) return 'Category name is required'
-  if (name.length > 200) return 'Category name must be under 200 characters'
-  return null
-}
-
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
+router.post('/', requireAuth, requireAdmin, validate(categorySchema), async (req, res) => {
   try {
-    const validationError = validateCategoryBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const newCategory = await categoryModel.createCategory(req.body, req.user.businessId)
     res.status(201).json(newCategory)
   } catch (err) {
@@ -43,12 +34,8 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   }
 })
 
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, validate(categorySchema), async (req, res) => {
   try {
-    const validationError = validateCategoryBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const updated = await categoryModel.updateCategory(req.params.id, req.body, req.user.businessId)
     if (!updated) return res.status(404).json({ error: 'Category not found' })
     res.json(updated)

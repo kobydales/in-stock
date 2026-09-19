@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const supplierModel = require('../models/supplierModel')
 const { requireAuth, requireAdmin } = require('../middleware/auth')
+const { validate } = require('../middleware/validate')
+const { supplierSchema } = require('../schemas/supplierSchemas')
 const { sendServerError } = require('../utils/errors')
 
 router.get('/', requireAuth, async (req, res) => {
@@ -23,19 +25,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 })
 
-function validateSupplierBody(body) {
-  const name = String(body.name || '').trim()
-  if (!name) return 'Supplier name is required'
-  if (name.length > 200) return 'Supplier name must be under 200 characters'
-  return null
-}
-
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
+router.post('/', requireAuth, requireAdmin, validate(supplierSchema), async (req, res) => {
   try {
-    const validationError = validateSupplierBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const newSupplier = await supplierModel.createSupplier(req.body, req.user.businessId)
     res.status(201).json(newSupplier)
   } catch (err) {
@@ -43,12 +34,8 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   }
 })
 
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, validate(supplierSchema), async (req, res) => {
   try {
-    const validationError = validateSupplierBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const updated = await supplierModel.updateSupplier(req.params.id, req.body, req.user.businessId)
     if (!updated) return res.status(404).json({ error: 'Supplier not found' })
     res.json(updated)
@@ -74,4 +61,4 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   }
 })
 
-module.exports = router;
+module.exports = router

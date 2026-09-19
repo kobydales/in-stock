@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { fetchDashboardStats, fetchRecentMovements, fetchMovementChart, fetchLowStockProducts, fetchProductVelocity } from '../services/api'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { getCurrentUser, isAdmin } from '../utils/auth'
 import Icon from '../components/Icon'
 import DateRangePicker from '../components/DateRangePicker'
@@ -9,6 +10,8 @@ import AdinkraWatermark from '../components/AdinkraWatermark'
 import AdinkraIcon from '../components/AdinkraIcon'
 import { capitalizeWords } from '../utils/textFormat'
 import './Dashboard.css'
+
+const MotionLink = motion(Link)
 
 function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -107,33 +110,57 @@ function Dashboard() {
           <h2>Akwaba, {name} <span aria-hidden="true">👋</span></h2>
           <p>Here&apos;s what&apos;s happening with your inventory today.</p>
         </div>
-        <div className="quick-actions">
-          <Link to="/stock-in" className="quick-action quick-action-in">
+        <div className="quick-actions" data-tour="quick-actions">
+          <MotionLink
+            to="/stock-in"
+            className="quick-action quick-action-in"
+            whileHover={{ y: -4 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          >
             <span className="quick-action-icon"><AdinkraIcon name="nyameDua" /></span>
             <span><strong>Stock In</strong><small>Add stock</small></span>
-          </Link>
-          <Link to="/stock-out" className="quick-action quick-action-out">
+          </MotionLink>
+          <MotionLink
+            to="/stock-out"
+            className="quick-action quick-action-out"
+            whileHover={{ y: -4 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          >
             <span className="quick-action-icon"><AdinkraIcon name="sankofa" /></span>
             <span><strong>Stock Out</strong><small>Remove stock</small></span>
-          </Link>
-          <Link to="/products" className="quick-action quick-action-product">
+          </MotionLink>
+          <MotionLink
+            to="/products"
+            className="quick-action quick-action-product"
+            whileHover={{ y: -4 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          >
             <span className="quick-action-icon"><AdinkraIcon name="mpatapo" /></span>
             <span><strong>Add Product</strong><small>New item</small></span>
-          </Link>
+          </MotionLink>
         </div>
       </section>
 
-      <section className="stats-grid">
-        {statCards.map((card) => {
+      <section className="stats-grid" data-tour="stats-grid">
+        {statCards.map((card, index) => {
           const content = (
-            <div className={`stat-card ${card.tone}`}>
+            <motion.div
+              className={`stat-card ${card.tone}`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: index * 0.08, ease: 'easeOut' }}
+              whileHover={{ y: -3 }}
+            >
               <div className="stat-copy">
                 <span className="stat-label">{card.label}</span>
                 <strong className="stat-value">{card.value}</strong>
                 <span className="stat-detail">{card.detail}</span>
               </div>
               <span className="stat-icon"><Icon name={card.icon} size={21} /></span>
-            </div>
+            </motion.div>
           )
           return card.link ? <Link key={card.label} to={card.link} className="stat-link">{content}</Link> : <div key={card.label}>{content}</div>
         })}
@@ -155,9 +182,15 @@ function Dashboard() {
               <div className="chart-grid-lines"><span /><span /><span /><span /></div>
               {chartBars.map((row, i) => (
                 <div className="bar-column" key={`${row.movement_type}-${i}`}>
-                  <div className={`bar ${row.movement_type === 'in' ? 'in' : 'out'}`} style={{ height: `${row.height}px` }} title={`${row.movement_type}: ${row.total}`}>
+                  <motion.div
+                    className={`bar ${row.movement_type === 'in' ? 'in' : 'out'}`}
+                    initial={{ height: 0 }}
+                    animate={{ height: `${row.height}px` }}
+                    transition={{ duration: 0.5, delay: i * 0.05, ease: 'easeOut' }}
+                    title={`${row.movement_type}: ${row.total}`}
+                  >
                     <AdinkraWatermark name={row.symbol} className="bar-watermark" />
-                  </div>
+                  </motion.div>
                   <span>{row.movement_type === 'in' ? 'In' : 'Out'}</span>
                   <small>{row.total}</small>
                 </div>

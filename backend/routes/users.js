@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const userModel = require('../models/userModel')
 const { requireAuth, requireAdmin } = require('../middleware/auth')
+const { validate } = require('../middleware/validate')
+const { createUserSchema } = require('../schemas/userSchemas')
 const { sendServerError } = require('../utils/errors')
 
 // Everything here is admin-only: staff can't see, add, or remove teammates.
@@ -16,19 +18,9 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', validate(createUserSchema), async (req, res) => {
   try {
-    const name = String(req.body.name || '').trim()
-    const email = String(req.body.email || '').trim().toLowerCase()
-    const password = String(req.body.password || '')
-    const role = req.body.role === 'admin' ? 'admin' : 'staff'
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email and password are required' })
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
-    }
+    const { name, email, password, role } = req.body
 
     const existingUser = await userModel.findUserByEmail(email)
     if (existingUser) {
@@ -40,7 +32,7 @@ router.post('/', async (req, res) => {
       name,
       email,
       password,
-      role,
+      role: role || 'staff',
     })
     res.status(201).json(user)
   } catch (err) {

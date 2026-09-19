@@ -2,21 +2,15 @@ const express = require('express')
 const router = express.Router()
 const stockMovementModel = require('../models/stockMovementModel')
 const { requireAuth } = require('../middleware/auth')
+const { validate } = require('../middleware/validate')
+const { stockMovementSchema } = require('../schemas/stockMovementSchemas')
 const { sendServerError } = require('../utils/errors')
 
-router.post('/in', requireAuth, async (req, res) => {
+router.post('/in', requireAuth, validate(stockMovementSchema), async (req, res) => {
   try {
     const { product_id, quantity, notes } = req.body
-
-    if (!product_id) {
-      return res.status(400).json({ error: 'product_id is required' })
-    }
-    if (!quantity || Number(quantity) <= 0) {
-      return res.status(400).json({ error: 'Quantity must be greater than 0' })
-    }
-
     const result = await stockMovementModel.stockIn(
-      Number(product_id), Number(quantity), notes, req.user.businessId, req.user.userId
+      product_id, quantity, notes, req.user.businessId, req.user.userId
     )
     res.status(201).json(result)
   } catch (err) {
@@ -27,19 +21,11 @@ router.post('/in', requireAuth, async (req, res) => {
   }
 })
 
-router.post('/out', requireAuth, async (req, res) => {
+router.post('/out', requireAuth, validate(stockMovementSchema), async (req, res) => {
   try {
     const { product_id, quantity, notes } = req.body
-
-    if (!product_id) {
-      return res.status(400).json({ error: 'product_id is required' })
-    }
-    if (!quantity || Number(quantity) <= 0) {
-      return res.status(400).json({ error: 'Quantity must be greater than 0' })
-    }
-
     const result = await stockMovementModel.stockOut(
-      Number(product_id), Number(quantity), notes, req.user.businessId, req.user.userId
+      product_id, quantity, notes, req.user.businessId, req.user.userId
     )
     res.status(201).json(result)
   } catch (err) {

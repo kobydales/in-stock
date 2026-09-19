@@ -19,13 +19,17 @@ import PlatformBusinessDetail from './pages/PlatformBusinessDetail'
 import Team from './pages/Team'
 import AdminRoute from './components/AdminRoute'
 import PlatformRoute from './components/PlatformRoute'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<Signup />} /><Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/*"

@@ -1,5 +1,6 @@
 const pool = require('../db')
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 
 async function createBusinessWithAdmin({ businessName, name, email, password }) {
   const client = await pool.connect()
@@ -99,6 +100,61 @@ async function deleteUser(id, businessId) {
   return result.rows[0]
 }
 
+async function setResetToken(email) {
+  const rawToken = crypto.randomBytes(32).toString('hex')
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
+
+  const result = await pool.query(
+    `UPDATE users
+     SET reset_token_hash = $1, reset_token_expires_at = $2
+     WHERE email = $3
+     RETURNING id, email`,
+    [tokenHash, expiresAt, email]
+  )
+
+  if (!result.rows[0]) return null
+  return rawToken
+}
+
+async function resetPasswordWithToken(rawToken, newPassword) {
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+
+  const userResult = await pool.query(
+    `SELECT id FROM users
+     WHERE reset_token_hash = $1 AND reset_token_expires_at > NOW()`,
+    [tokenHash]
+  )
+  const user = userResult.rows[0]
+  if (!user) return false
+
+  const passwordHash = await bcrypt.hash(newPassword, 10)
+
+  await pool.query(
+    `UPDATE users
+     SET password_hash = $1, reset_token_hash = NULL, reset_token_expires_at = NULL
+     WHERE id = $2`,
+    [passwordHash, user.id]
+  )
+
+  return true
+}
+
+async function getUserAuthById(id) {
+  const result = await pool.query(
+    'SELECT id, password_hash FROM users WHERE id = $1',
+    [id]
+  )
+  return result.rows[0]
+}
+
+async function updatePassword(id, passwordHash) {
+  await pool.query(
+    'UPDATE users SET password_hash = $1 WHERE id = $2',
+    [passwordHash, id]
+  )
+}
+
 module.exports = {
   createBusinessWithAdmin,
   findUserByEmail,
@@ -107,4 +163,8 @@ module.exports = {
   getUserById,
   countAdmins,
   deleteUser,
+  setResetToken,
+  resetPasswordWithToken,
+  getUserAuthById,
+  updatePassword,
 }

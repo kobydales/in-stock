@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import './MainLayout.css'
 import { logout } from '../services/api'
 import { getCurrentUser, isPlatformOwner, isAdmin } from '../utils/auth'
 import NotificationBell from '../components/NotificationBell'
+import ProfileMenu from '../components/ProfileMenu'
 import AdinkraIcon from '../components/AdinkraIcon'
 import { capitalizeWords } from '../utils/textFormat'
 import Icon from '../components/Icon'
@@ -11,6 +12,10 @@ import OfflineBanner from '../components/OfflineBanner'
 import { useInstallPrompt, useIsIOSInstallable } from '../utils/useInstallPrompt'
 import mpatapo from '../assets/adinkra/mpatapo.svg'
 import inStockLogo from '../assets/in-stock-logo.png'
+// Tour paused — see /components/Tour.jsx and /utils/tour.js. Re-enable by
+// uncommenting the import below and the <Tour> render at the bottom.
+// import Tour from '../components/Tour'
+// import { hasSeenTour } from '../utils/tour'
 
 const primaryNav = [
   { to: '/', label: 'Dashboard', icon: 'grid' },
@@ -28,10 +33,15 @@ const inventoryNav = [
   { to: '/reports', label: 'Reports', icon: 'chart' },
 ]
 
+function navTourId(to) {
+  return to === '/' ? 'dashboard' : to.replace('/', '')
+}
+
 function MainLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [runTour, setRunTour] = useState(false)
   const user = getCurrentUser()
   const showPlatformNav = isPlatformOwner()
   const userIsAdmin = isAdmin()
@@ -43,6 +53,28 @@ function MainLayout({ children }) {
   const role = user?.role === 'admin' ? 'Administrator' : 'Staff'
   const rawBusinessName = user?.businessName || user?.business_name || ''
   const businessName = rawBusinessName ? capitalizeWords(rawBusinessName) : ''
+
+  // Tour auto-trigger paused — see note above.
+  // useEffect(() => {
+  //   if (user?.id && !hasSeenTour(user.id)) {
+  //     setMenuOpen(true)
+  //     setRunTour(true)
+  //   }
+  // }, [])
+
+  function startTour() {
+    setMenuOpen(true)
+    setRunTour(true)
+  }
+
+  function handleSidebarSectionDone() {
+    setMenuOpen(false)
+  }
+
+  function handleTourFinish() {
+    setRunTour(false)
+    setMenuOpen(false)
+  }
 
   const pageTitles = {
     '/': 'Dashboard',
@@ -77,6 +109,7 @@ function MainLayout({ children }) {
         end={item.to === '/'}
         onClick={closeMenu}
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+        data-tour={`nav-${navTourId(item.to)}`}
       >
         <Icon name={item.icon} size={18} />
         <span>{item.label}</span>
@@ -123,19 +156,6 @@ function MainLayout({ children }) {
 
         <div className="sidebar-spacer" />
 
-        <div className="user-card">
-          <div className="avatar">{displayName.charAt(0).toUpperCase()}</div>
-          <div className="user-details">
-            <strong>{displayName}</strong>
-            <span>{role}</span>
-          </div>
-        </div>
-
-        <button className="logout-button" onClick={handleLogout}>
-          <Icon name="logout" size={17} />
-          <span>Log out</span>
-        </button>
-
         {businessName && (
           <div className="sidebar-footer"><AdinkraIcon name="mpatapo" className="sidebar-business-symbol" /><span>{businessName}</span></div>
         )}
@@ -165,20 +185,30 @@ function MainLayout({ children }) {
           </div>
 
           <div className="header-actions">
-            <NotificationBell />
-            <div className="header-user">
-              <div className="avatar small">{displayName.charAt(0).toUpperCase()}</div>
-              <div className="header-user-text">
-                <strong>{displayName}</strong>
-                <span>{role}</span>
-              </div>
-            </div>
+            <div data-tour="notification-bell"><NotificationBell /></div>
+            <ProfileMenu
+              displayName={displayName}
+              role={role}
+              businessName={businessName}
+              onLogout={handleLogout}
+              onTakeTour={startTour}
+            />
           </div>
         </header>
 
         <main className="content">{children}</main>
       </div>
       </div>
+      {/* Tour paused — see note above.
+      <Tour
+        run={runTour}
+        userId={user?.id}
+        userIsAdmin={userIsAdmin}
+        showPlatformNav={showPlatformNav}
+        onSidebarSectionDone={handleSidebarSectionDone}
+        onFinish={handleTourFinish}
+      />
+      */}
     </>
   )
 }

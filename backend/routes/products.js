@@ -3,6 +3,8 @@ const router = express.Router()
 const productModel = require('../models/productModel')
 const notificationModel = require('../models/notificationModel')
 const { requireAuth, requireAdmin } = require('../middleware/auth')
+const { validate } = require('../middleware/validate')
+const { productSchema } = require('../schemas/productSchemas')
 const { sendServerError } = require('../utils/errors')
 
 router.get('/low-stock', requireAuth, async (req, res) => {
@@ -35,27 +37,8 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 })
 
-function validateProductBody(body) {
-  const name = String(body.name || '').trim()
-
-  if (!name) return 'Product name is required'
-  if (name.length > 200) return 'Product name must be under 200 characters'
-  if (body.sku && String(body.sku).length > 100) return 'SKU must be under 100 characters'
-  if (body.quantity !== undefined && Number(body.quantity) < 0) {
-    return 'Quantity cannot be negative'
-  }
-  if (body.minimum_stock !== undefined && Number(body.minimum_stock) < 0) {
-    return 'Minimum stock cannot be negative'
-  }
-  return null
-}
-
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, validate(productSchema), async (req, res) => {
   try {
-    const validationError = validateProductBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const newProduct = await productModel.createProduct(req.body, req.user.businessId, req.user.userId)
     res.status(201).json(newProduct)
   } catch (err) {
@@ -66,12 +49,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, validate(productSchema), async (req, res) => {
   try {
-    const validationError = validateProductBody(req.body)
-    if (validationError) {
-      return res.status(400).json({ error: validationError })
-    }
     const before = await productModel.getProductById(req.params.id, req.user.businessId)
     const updatedProduct = await productModel.updateProduct(req.params.id, req.body, req.user.businessId)
     if (!updatedProduct) {

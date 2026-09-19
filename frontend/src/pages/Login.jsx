@@ -59,6 +59,7 @@ function Login() {
           </form>
 
           <p className="auth-switch">Don't have an account? <Link to="/signup">Create one</Link></p>
+          <p className="auth-switch"><Link to="/forgot-password">Forgot your password?</Link></p>
           <p className="auth-footer">Built for everyday stock management · Ghana</p>
         </div>
       </section>
